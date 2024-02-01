@@ -9,6 +9,7 @@ pub struct FileNode {
     pub file_type: FileType,
     pub lowercase_name: String,
     pub is_symlink: bool,
+    pub is_directory: bool,
 }
 
 impl FileNode {
@@ -44,7 +45,8 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
                 .context("failed to read symlink metadata")
                 .ok()?;
             let is_symlink = symlink_md.is_symlink();
-            let file_type = if md.is_dir() {
+            let is_directory = md.is_dir();
+            let file_type = if is_directory {
                 FileType::Directory
             } else if md.is_file() {
                 FileType::Regular
@@ -58,6 +60,7 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
                 file_type,
                 lowercase_name,
                 is_symlink,
+                is_directory,
             })
         })
         .collect();

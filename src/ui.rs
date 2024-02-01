@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 use crate::app::App;
-use crate::filesystem::FileNode;
+use crate::tree::TreeNode;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -47,9 +47,9 @@ fn render_info_panel(_app: &mut App, frame: &mut Frame, area: Rect) {
 
 fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
     let list_items: Vec<ListItem> = app
-        .current_child_nodes
+        .child_tree_nodes
         .iter()
-        .map(|it: &FileNode| ListItem::new(it.display_name()))
+        .map(|it: &TreeNode| ListItem::new(it.display_name.clone()))
         .collect();
 
     let title = app.get_current_string_path();
@@ -66,7 +66,7 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
 fn render_filter_panel(app: &mut App, frame: &mut Frame, area: Rect) {
     let p_text = format!("{}\u{2588}", app.filter_text);
     let panel_color = Color::LightYellow;
-    let mut title = Block::default().title("Filter");
+    let mut title = Block::default().title("Search");
     title = title.title_style(Style::new().bold());
 
     let widget = Paragraph::new(p_text)

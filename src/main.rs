@@ -3,6 +3,7 @@ mod appdata;
 mod event;
 mod filesystem;
 mod numbers;
+mod tree;
 mod tui;
 mod ui;
 mod update;
