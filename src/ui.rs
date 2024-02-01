@@ -49,7 +49,7 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
     let list_items: Vec<ListItem> = app
         .current_child_nodes
         .iter()
-        .map(|it: &FileNode| ListItem::new(it.name.to_string()))
+        .map(|it: &FileNode| ListItem::new(it.display_name()))
         .collect();
 
     let widget = List::new(list_items)

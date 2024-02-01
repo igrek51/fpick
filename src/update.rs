@@ -10,6 +10,9 @@ pub fn update(app: &mut App, key_event: KeyEvent) {
         }
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
+        KeyCode::Left => app.go_up(),
+        KeyCode::Right => app.go_into(),
+        KeyCode::Enter => app.pick_file(),
         _ => {}
     };
 }

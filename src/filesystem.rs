@@ -3,7 +3,7 @@ use std::fs::{self, ReadDir};
 use std::fs::{metadata, DirEntry};
 use std::path::Path;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileNode {
     pub name: String,
     pub file_type: FileType,
@@ -15,6 +15,16 @@ pub enum FileType {
     Directory,
     Link,
     Other,
+}
+
+impl FileNode {
+    pub fn display_name(&self) -> String {
+        match self.file_type {
+            FileType::Directory => format!("{}/", self.name),
+            FileType::Link => format!("{}@", self.name),
+            _ => self.name.clone(),
+        }
+    }
 }
 
 pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
