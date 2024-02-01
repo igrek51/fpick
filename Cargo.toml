@@ -1,0 +1,22 @@
+[package]
+name = "fpick"
+version = "0.3.3"
+license = "MIT"
+edition = "2021"
+description = "Interactive file picker"
+repository = "https://github.com/igrek51/fpick"
+homepage = "https://github.com/igrek51/fpick"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+crossterm = "0.27.0"
+itertools = "0.12.0"
+ratatui = "0.25.0"
+signal-hook = "0.3.17"
+
+[[bin]]
+name = "fpick"
+path = "src/main.rs"
