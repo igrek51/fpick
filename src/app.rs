@@ -102,7 +102,23 @@ impl App {
     pub fn populate_current_child_nodes(&mut self) {
         let path = self.get_current_string_path();
 
-        self.current_child_nodes = list_files(std::path::Path::new(&path)).unwrap_or_default();
+        let mut nodes = list_files(std::path::Path::new(&path)).unwrap_or_default();
+        // sort nodes so that nodes with directory type are at the top
+        nodes.sort_by(|a, b| {
+            if a.file_type == crate::filesystem::FileType::Directory
+                && b.file_type != crate::filesystem::FileType::Directory
+            {
+                std::cmp::Ordering::Less
+            } else if a.file_type != crate::filesystem::FileType::Directory
+                && b.file_type == crate::filesystem::FileType::Directory
+            {
+                std::cmp::Ordering::Greater
+            } else {
+                a.lowercase_name.cmp(&b.lowercase_name)
+            }
+        });
+
+        self.current_child_nodes = nodes;
     }
 
     pub fn move_cursor(&mut self, delta: i32) {

@@ -29,7 +29,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 }
 
 fn render_info_panel(_app: &mut App, frame: &mut Frame, area: Rect) {
-    let p_text = "`/` to filter. `F5` to refresh. `F6` to sort. `Enter` to confirm. `Esc` to exit.";
+    let p_text = "Navigate with arrows. Type to filter. `Enter` to pick a path. `Esc` to exit.";
     let widget = Paragraph::new(p_text)
         .wrap(Wrap { trim: true })
         .block(

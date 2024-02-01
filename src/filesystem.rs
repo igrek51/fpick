@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use std::fs::{self, ReadDir};
+use std::fs::{self, symlink_metadata, ReadDir};
 use std::fs::{metadata, DirEntry};
 use std::path::Path;
 
@@ -7,24 +7,28 @@ use std::path::Path;
 pub struct FileNode {
     pub name: String,
     pub file_type: FileType,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum FileType {
-    Regular,
-    Directory,
-    Link,
-    Other,
+    pub lowercase_name: String,
+    pub is_symlink: bool,
 }
 
 impl FileNode {
     pub fn display_name(&self) -> String {
-        match self.file_type {
-            FileType::Directory => format!("{}/", self.name),
-            FileType::Link => format!("{}@", self.name),
-            _ => self.name.clone(),
+        let mut display = self.name.clone();
+        if self.is_symlink {
+            display = format!("{}@", display)
         }
+        if self.file_type == FileType::Directory {
+            display = format!("{}/", display)
+        }
+        display
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum FileType {
+    Regular,   // regular file or symlink to regular file
+    Directory, // regular directory or link to a directory
+    Other,
 }
 
 pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
@@ -36,17 +40,25 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
             let md = metadata(entry.path())
                 .context("failed to read file metadata")
                 .ok()?;
+            let symlink_md = symlink_metadata(entry.path())
+                .context("failed to read symlink metadata")
+                .ok()?;
+            let is_symlink = symlink_md.is_symlink();
             let file_type = if md.is_dir() {
                 FileType::Directory
             } else if md.is_file() {
                 FileType::Regular
-            } else if md.file_type().is_symlink() {
-                FileType::Link
             } else {
                 FileType::Other
             };
             let name = entry.file_name().to_string_lossy().to_string();
-            Some(FileNode { name, file_type })
+            let lowercase_name = name.to_lowercase();
+            Some(FileNode {
+                name,
+                file_type,
+                lowercase_name,
+                is_symlink,
+            })
         })
         .collect();
 
