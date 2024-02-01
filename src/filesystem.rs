@@ -1,0 +1,44 @@
+use anyhow::{Context, Result};
+use std::fs::{self, ReadDir};
+use std::fs::{metadata, DirEntry};
+use std::path::Path;
+
+#[derive(Debug)]
+pub struct FileNode {
+    pub name: String,
+    pub file_type: FileType,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum FileType {
+    Regular,
+    Directory,
+    Link,
+    Other,
+}
+
+pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
+    let dir_entries: ReadDir = fs::read_dir(dir_path).context("failed to read directory")?;
+
+    let files: Vec<FileNode> = dir_entries
+        .filter_map(|entry| {
+            let entry: DirEntry = entry.context("failed to list a file").ok()?;
+            let md = metadata(entry.path())
+                .context("failed to read file metadata")
+                .ok()?;
+            let file_type = if md.is_dir() {
+                FileType::Directory
+            } else if md.is_file() {
+                FileType::Regular
+            } else if md.file_type().is_symlink() {
+                FileType::Link
+            } else {
+                FileType::Other
+            };
+            let name = entry.file_name().to_string_lossy().to_string();
+            Some(FileNode { name, file_type })
+        })
+        .collect();
+
+    return Ok(files);
+}

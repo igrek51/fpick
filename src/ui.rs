@@ -6,17 +6,19 @@ use ratatui::{
 };
 
 use crate::app::App;
+use crate::filesystem::FileNode;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     let area = frame.size();
+    let middle_h = area.height - 3 - 3;
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
             Constraint::Max(3),
-            Constraint::Min(10),
+            Constraint::Min(middle_h),
             Constraint::Max(3),
         ])
         .split(area);
@@ -44,9 +46,19 @@ fn render_info_panel(_app: &mut App, frame: &mut Frame, area: Rect) {
 }
 
 fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
-    // let list_items: Vec<ListItem> = vec![];
-    // let mut list_state = ListState::default().with_selected(Some(list_items));
-    // frame.render_stateful_widget(widget, area, &mut list_state);
+    let list_items: Vec<ListItem> = app
+        .current_child_nodes
+        .iter()
+        .map(|it: &FileNode| ListItem::new(it.name.to_string()))
+        .collect();
+
+    let widget = List::new(list_items)
+        .block(Block::default().title("Files tree").borders(Borders::ALL))
+        .style(Style::default().fg(Color::White))
+        .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
+        .highlight_symbol(">> ");
+
+    frame.render_stateful_widget(widget, area, &mut app.file_tree_state);
 }
 
 fn render_filter_panel(app: &mut App, frame: &mut Frame, area: Rect) {
