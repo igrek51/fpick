@@ -14,5 +14,8 @@ use crate::app::App;
 fn main() -> Result<()> {
     let mut app = App::new();
     app.run()?;
+    if app.exit_code != 0 {
+        std::process::exit(app.exit_code);
+    }
     Ok(())
 }

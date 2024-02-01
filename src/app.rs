@@ -17,6 +17,7 @@ pub struct App {
     pub filter_text: String,
     pub file_tree_state: ListState,
     pub picked_path: Option<String>,
+    pub exit_code: i32,
 }
 
 impl App {
@@ -25,6 +26,7 @@ impl App {
     }
 
     pub fn run(&mut self) -> Result<()> {
+        self.pre_init();
         let signal_rx = self.handle_signals();
         self.init();
         let mut tui = Tui::new();
@@ -60,6 +62,14 @@ impl App {
 
     pub fn quit(&mut self) {
         self.should_quit = true;
+    }
+
+    pub fn pre_init(&mut self) {
+        let args: Vec<String> = std::env::args().collect();
+        if args.last().map(|s| s == "--version").unwrap_or(false) {
+            println!("{}", env!("CARGO_PKG_VERSION"));
+            std::process::exit(0);
+        }
     }
 
     pub fn init(&mut self) {
@@ -158,6 +168,8 @@ impl App {
     pub fn post_exit(&mut self) {
         if let Some(picked_path) = &self.picked_path {
             println!("{}", picked_path);
+        } else {
+            self.exit_code = 1;
         }
     }
 }

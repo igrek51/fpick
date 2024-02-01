@@ -39,7 +39,7 @@ fn render_info_panel(_app: &mut App, frame: &mut Frame, area: Rect) {
                 .borders(Borders::ALL)
                 .border_type(BorderType::Rounded),
         )
-        .style(Style::default().fg(Color::LightRed))
+        .style(Style::default().fg(Color::Gray))
         .alignment(Alignment::Center);
 
     frame.render_widget(widget, area);
@@ -52,8 +52,10 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
         .map(|it: &FileNode| ListItem::new(it.display_name()))
         .collect();
 
+    let title = app.get_current_string_path();
+
     let widget = List::new(list_items)
-        .block(Block::default().title("Files tree").borders(Borders::ALL))
+        .block(Block::default().title(title).borders(Borders::ALL))
         .style(Style::default().fg(Color::White))
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
         .highlight_symbol(">> ");
