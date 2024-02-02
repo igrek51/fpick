@@ -1,7 +1,6 @@
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use signal_hook::{consts::SIGINT, consts::SIGTERM, iterator::Signals};
-use std::fs::File;
 use std::sync::mpsc;
 use std::thread;
 

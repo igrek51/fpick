@@ -1,11 +1,34 @@
+use ratatui::{
+    style::{Style, Stylize},
+    text::{Line, Span},
+    widgets::ListItem,
+};
+
 use crate::filesystem::FileNode;
 
 #[derive(Debug, Clone)]
 pub struct TreeNode {
-    pub display_name: String,
     pub indent: i32,
     pub relevance: i32,
     pub file_node: FileNode,
+}
+
+impl TreeNode {
+    pub fn render_list_item(&self) -> ListItem {
+        let display = self.file_node.name.clone();
+        let mut suffix = String::new();
+        let mut style = Style::default();
+        if self.file_node.is_symlink {
+            suffix = format!("{suffix}@");
+            style = Style::default().fg(ratatui::style::Color::LightCyan).bold();
+        }
+        if self.file_node.is_directory {
+            suffix = format!("{suffix}/");
+            style = Style::default().fg(ratatui::style::Color::LightBlue).bold();
+        }
+
+        Line::from(vec![Span::styled(display, style), Span::raw(suffix)]).into()
+    }
 }
 
 pub fn evaluate_relevance(text: &str, words: &Vec<String>) -> i32 {
@@ -35,7 +58,6 @@ pub fn render_tree_nodes(child_nodes: &Vec<FileNode>, filter_text: &str) -> Vec<
     let mut current_tree_nodes: Vec<TreeNode> = child_nodes
         .iter()
         .map(|it: &FileNode| TreeNode {
-            display_name: it.display_name(),
             indent: 0,
             relevance: evaluate_relevance(it.lowercase_name.as_str(), &filter_words),
             file_node: it.clone(),

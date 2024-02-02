@@ -12,19 +12,6 @@ pub struct FileNode {
     pub is_directory: bool,
 }
 
-impl FileNode {
-    pub fn display_name(&self) -> String {
-        let mut display = self.name.clone();
-        if self.is_symlink {
-            display = format!("{}@", display)
-        }
-        if self.file_type == FileType::Directory {
-            display = format!("{}/", display)
-        }
-        display
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FileType {
     Regular,   // regular file or symlink to regular file
