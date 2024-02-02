@@ -21,7 +21,7 @@ This will install `fpick` binary in Rust's Path.
 Alternatively, you can download the compiled binary:
 
 ```sh
-curl -L https://github.com/igrek51/fpick/releases/download/latest/fpick -o ~/bin/fpick
+curl -L https://github.com/igrek51/fpick/releases/download/0.2.0/fpick -o ~/bin/fpick
 chmod +x ~/bin/fpick
 ```
 
