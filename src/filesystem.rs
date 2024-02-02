@@ -54,3 +54,17 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
 
     return Ok(files);
 }
+
+pub fn trim_end_slash(path: String) -> String {
+    if path == "/" {
+        return path;
+    }
+    if path.ends_with('/') {
+        return path[..path.len() - 1].to_string();
+    }
+    path.to_string()
+}
+
+pub fn normalize_path(path: String) -> String {
+    path.replace("//", "/")
+}

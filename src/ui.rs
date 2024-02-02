@@ -50,11 +50,9 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
         .child_tree_nodes
         .iter()
         .map(|it: &TreeNode| it.render_list_item())
-        // .map(|it: &TreeNode| ListItem::new(it.display_name()))
         .collect();
 
     let title = app.get_current_string_path();
-
     let widget = List::new(list_items)
         .block(Block::default().title(title).borders(Borders::ALL))
         .style(Style::default().fg(Color::White))

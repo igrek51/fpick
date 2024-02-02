@@ -39,6 +39,8 @@ pub fn evaluate_relevance(text: &str, words: &Vec<String>) -> i32 {
     for word in words {
         if text.contains(word) {
             relevance += 1;
+        } else {
+            return 0;
         }
     }
     let firs_word = words.first().unwrap();

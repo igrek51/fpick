@@ -36,7 +36,7 @@ Navigate with keyboard:
 - Type in the phrase of a filename to filter the list of files
 - Enter to select a file, exit and print its path to stdout.
 
-You can use it in combination with other commands, for example to open a file in an editor:
+You can use it in combination with other commands, for example to print the selected file:
 ```sh
-vim `fpick`
+cat `fpick`
 ```

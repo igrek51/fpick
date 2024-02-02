@@ -1,10 +1,10 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use ratatui::widgets::ListState;
 use signal_hook::{consts::SIGINT, consts::SIGTERM, iterator::Signals};
 use std::sync::mpsc;
 use std::thread;
 
-use crate::filesystem::{list_files, FileNode};
+use crate::filesystem::{list_files, normalize_path, trim_end_slash, FileNode};
 use crate::numbers::ClampNumExt;
 use crate::tree::{render_tree_nodes, TreeNode};
 use crate::tui::Tui;
@@ -12,6 +12,7 @@ use crate::tui::Tui;
 #[derive(Debug, Default)]
 pub struct App {
     pub should_quit: bool,
+    pub starting_dir: String,
     pub parent_nodes: Vec<FileNode>, // nodes leading to the current directory
     pub child_nodes: Vec<FileNode>,  // nodes in the current directory
     pub child_tree_nodes: Vec<TreeNode>, // nodes of whole filesystem tree
@@ -28,7 +29,7 @@ impl App {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        self.pre_init();
+        self.pre_init()?;
         let signal_rx = self.handle_signals();
         self.init();
         let mut tui = Tui::new();
@@ -62,12 +63,27 @@ impl App {
 
     pub fn tick(&mut self) {}
 
-    pub fn pre_init(&mut self) {
+    pub fn pre_init(&mut self) -> Result<()> {
         let args: Vec<String> = std::env::args().collect();
-        if args.last().map(|s| s == "--version").unwrap_or(false) {
-            println!("{}", env!("CARGO_PKG_VERSION"));
-            std::process::exit(0);
+        if args.len() == 2 {
+            let last: &String = args.last().unwrap();
+            if last == "--version" {
+                println!("{}", env!("CARGO_PKG_VERSION"));
+                std::process::exit(0);
+            } else if last == "--help" {
+                println!("fpick - interactive file picker. Usage:");
+                println!("fpick - to select a file in a current directory and return its path");
+                println!("fpick <path> - to select a file starting from a specified directory");
+                println!("fpick --version - to print version");
+                println!("fpick --help - to print usage");
+                std::process::exit(0);
+            } else {
+                self.starting_dir = trim_end_slash(last.to_string());
+            }
+        } else if args.len() > 2 {
+            return Err(anyhow!("unrecognized arguments. Use --help for usage"));
         }
+        Ok(())
     }
 
     pub fn init(&mut self) {
@@ -98,6 +114,10 @@ impl App {
         }
     }
 
+    pub fn reset_cursor_offset(&mut self) {
+        self.file_tree_state = self.file_tree_state.clone().with_offset(0);
+    }
+
     pub fn move_cursor(&mut self, delta: i32) {
         let new_cursor = (self.dir_cursor as i32 + delta)
             .clamp_max(self.child_tree_nodes.len() as i32 - 1)
@@ -106,14 +126,18 @@ impl App {
     }
 
     pub fn get_current_string_path(&self) -> String {
-        if self.parent_nodes.is_empty() {
-            return ".".to_string();
-        }
-        self.parent_nodes
+        let mut all_names = self
+            .parent_nodes
             .iter()
             .map(|node| node.name.to_string())
-            .collect::<Vec<String>>()
-            .join("/")
+            .collect::<Vec<String>>();
+        if !self.starting_dir.is_empty() {
+            all_names.insert(0, self.starting_dir.clone());
+        }
+        if all_names.is_empty() {
+            return ".".to_string();
+        }
+        return normalize_path(all_names.join("/"));
     }
 
     pub fn populate_current_child_nodes(&mut self) {
@@ -157,6 +181,7 @@ impl App {
                 self.dir_cursor = 0;
             }
         }
+        self.reset_cursor_offset();
         self.set_dir_cursor(self.dir_cursor);
     }
 
@@ -182,6 +207,7 @@ impl App {
         self.parent_nodes.push(selected_node);
         self.filter_text.clear();
         self.populate_current_child_nodes();
+        self.reset_cursor_offset();
         self.set_dir_cursor(0);
     }
 
@@ -195,13 +221,16 @@ impl App {
         }
         let selected_node: FileNode = selected_node_o.unwrap();
 
-        let mut all_nodes = self.parent_nodes.clone();
-        all_nodes.push(selected_node);
-        let selected_path = all_nodes
+        let mut all_names = self
+            .parent_nodes
             .iter()
             .map(|node| node.name.to_string())
-            .collect::<Vec<String>>()
-            .join("/");
+            .collect::<Vec<String>>();
+        if !self.starting_dir.is_empty() {
+            all_names.insert(0, self.starting_dir.clone());
+        }
+        all_names.push(selected_node.name.to_string());
+        let selected_path = normalize_path(all_names.join("/"));
 
         self.picked_path = Some(selected_path);
         self.quit();
@@ -209,6 +238,7 @@ impl App {
 
     pub fn render_tree_nodes(&mut self) {
         self.child_tree_nodes = render_tree_nodes(&self.child_nodes, &self.filter_text);
+        self.reset_cursor_offset();
         self.move_cursor(0); // validate cursor position
     }
 }
