@@ -40,3 +40,7 @@ You can use it in combination with other commands, for example to print the sele
 ```sh
 cat `fpick`
 ```
+or change directory interactively:
+```sh
+cd `fpick`
+```
