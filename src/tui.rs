@@ -7,10 +7,6 @@ pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBacken
 
 use crate::{app::App, event::Event, event::EventHandler, ui, update::update};
 
-/// Representation of a terminal user interface.
-///
-/// It is responsible for setting up the terminal,
-/// initializing the interface and handling the draw events.
 pub struct Tui {
     terminal: CrosstermTerminal,
     pub events: EventHandler,
@@ -24,15 +20,10 @@ impl Tui {
         Self { terminal, events }
     }
 
-    /// Initializes the terminal interface.
-    ///
-    /// It enables the raw mode and sets terminal properties.
     pub fn enter(&mut self) -> Result<()> {
         terminal::enable_raw_mode()?;
         crossterm::execute!(io::stderr(), EnterAlternateScreen,)?;
 
-        // Define a custom panic hook to reset the terminal properties.
-        // This way, you won't have your terminal messed up if an unexpected error happens.
         let panic_hook = panic::take_hook();
         panic::set_hook(Box::new(move |panic| {
             Self::reset().expect("failed to reset the terminal");
@@ -59,19 +50,12 @@ impl Tui {
         Ok(())
     }
 
-    /// Resets the terminal interface.
-    ///
-    /// This function is also used for the panic hook to revert
-    /// the terminal properties if unexpected errors occur.
     fn reset() -> Result<()> {
         terminal::disable_raw_mode()?;
         crossterm::execute!(io::stderr(), LeaveAlternateScreen,)?;
         Ok(())
     }
 
-    /// Exits the terminal interface.
-    ///
-    /// It disables the raw mode and reverts back the terminal properties.
     pub fn exit(&mut self) -> Result<()> {
         Self::reset()?;
         Ok(())

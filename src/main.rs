@@ -1,5 +1,5 @@
 mod app;
-mod appdata;
+mod app_logic;
 mod event;
 mod filesystem;
 mod numbers;
