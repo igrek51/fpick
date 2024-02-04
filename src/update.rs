@@ -4,6 +4,8 @@ use crate::app::App;
 
 pub fn update(app: &mut App, key_event: KeyEvent) {
     match key_event.code {
+        KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter if app.has_error() => app.clear_error(),
         KeyCode::Esc => app.quit(),
         KeyCode::Char('c') | KeyCode::Char('C') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.quit()

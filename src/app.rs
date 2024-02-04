@@ -20,6 +20,7 @@ pub struct App {
     pub file_tree_state: ListState,
     pub picked_path: Option<String>,
     pub exit_code: i32,
+    pub error_message: Option<String>,
 }
 
 impl App {
@@ -30,7 +31,7 @@ impl App {
     pub fn run(&mut self) -> Result<()> {
         self.pre_init()?;
         let signal_rx = self.handle_signals();
-        self.init();
+        self.init_catch();
         let mut tui = Tui::new();
         tui.enter()?;
 

@@ -1,5 +1,6 @@
 mod app;
 mod app_logic;
+mod errors;
 mod event;
 mod filesystem;
 mod numbers;

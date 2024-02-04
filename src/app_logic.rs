@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 
 use crate::app::App;
+use crate::errors::contextualized_error;
 use crate::filesystem::{
     get_path_file_nodes, list_files, normalize_path, trim_end_slash, FileNode,
 };
@@ -28,16 +29,21 @@ impl App {
         } else if args.len() > 2 {
             return Err(anyhow!("unrecognized arguments. Use --help for usage"));
         }
-
-        self.parent_nodes =
-            get_path_file_nodes(&self.starting_dir).context("getting path nodes")?;
-
         Ok(())
     }
 
-    pub fn init(&mut self) {
+    pub fn init_catch(&mut self) {
+        if let Err(e) = self.init() {
+            self.error_message = Some(contextualized_error(&e));
+        }
+    }
+
+    pub fn init(&mut self) -> Result<()> {
+        self.parent_nodes =
+            get_path_file_nodes(&self.starting_dir).context("reading path nodes")?;
         self.populate_current_child_nodes();
         self.set_dir_cursor(0);
+        Ok(())
     }
 
     pub fn render_tree_nodes(&mut self) {
@@ -95,7 +101,13 @@ impl App {
     pub fn populate_current_child_nodes(&mut self) {
         let path = self.get_current_string_path();
 
-        let mut nodes = list_files(std::path::Path::new(&path)).unwrap_or_default();
+        let nodes_result = list_files(std::path::Path::new(&path));
+        if nodes_result.is_err() {
+            self.error_message = Some(nodes_result.unwrap_err().to_string());
+            self.child_nodes = vec![];
+            return;
+        }
+        let mut nodes = nodes_result.unwrap();
         nodes.sort_by(|a, b| {
             if a.file_type == crate::filesystem::FileType::Directory
                 && b.file_type != crate::filesystem::FileType::Directory
@@ -201,5 +213,13 @@ impl App {
     pub fn clear_search_text(&mut self) {
         self.filter_text.clear();
         self.render_tree_nodes();
+    }
+
+    pub fn has_error(&self) -> bool {
+        self.error_message.is_some()
+    }
+
+    pub fn clear_error(&mut self) {
+        self.error_message = None;
     }
 }
