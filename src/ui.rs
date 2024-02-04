@@ -8,41 +8,17 @@ use ratatui::{
 use crate::app::App;
 use crate::tree::TreeNode;
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub fn render(app: &mut App, frame: &mut Frame) {
     let area = frame.size();
-    let middle_h = area.height - 3 - 3;
+    let middle_h = area.height - 3;
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Max(3),
-            Constraint::Min(middle_h),
-            Constraint::Max(3),
-        ])
+        .constraints(vec![Constraint::Min(middle_h), Constraint::Max(3)])
         .split(area);
 
-    render_info_panel(app, frame, layout[0]);
-    render_dir_tree(app, frame, layout[1]);
-    render_filter_panel(app, frame, layout[2]);
-}
-
-fn render_info_panel(_app: &mut App, frame: &mut Frame, area: Rect) {
-    let p_text = "Navigate with arrows. Type to filter. `Enter` to pick a path. `Esc` to exit.";
-    let widget = Paragraph::new(p_text)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .title(format!("fpick {}", VERSION))
-                .title_alignment(Alignment::Center)
-                .borders(Borders::ALL)
-                .border_type(BorderType::Rounded),
-        )
-        .style(Style::default().fg(Color::Gray))
-        .alignment(Alignment::Center);
-
-    frame.render_widget(widget, area);
+    render_dir_tree(app, frame, layout[0]);
+    render_filter_panel(app, frame, layout[1]);
 }
 
 fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {

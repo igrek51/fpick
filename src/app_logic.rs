@@ -180,4 +180,19 @@ impl App {
         self.picked_path = Some(selected_path);
         self.quit();
     }
+
+    pub fn type_search_text(&mut self, c: char) {
+        self.filter_text.push(c);
+        self.render_tree_nodes();
+    }
+
+    pub fn backspace_search_text(&mut self) {
+        self.filter_text.pop();
+        self.render_tree_nodes();
+    }
+
+    pub fn clear_search_text(&mut self) {
+        self.filter_text.clear();
+        self.render_tree_nodes();
+    }
 }

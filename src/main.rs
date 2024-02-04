@@ -8,15 +8,17 @@ mod tui;
 mod ui;
 mod update;
 
-use anyhow::Result;
+use std::process::ExitCode;
+
+use anyhow::Context;
 
 use crate::app::App;
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let mut app = App::new();
-    app.run()?;
-    if app.exit_code != 0 {
-        std::process::exit(app.exit_code);
+    app.run().context("app failed").unwrap();
+    match app.exit_code {
+        0 => ExitCode::SUCCESS,
+        _ => ExitCode::from(app.exit_code as u8),
     }
-    Ok(())
 }

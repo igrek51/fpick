@@ -18,20 +18,16 @@ pub fn update(app: &mut App, key_event: KeyEvent) {
         KeyCode::Home => app.move_cursor(-(app.child_nodes.len() as i32)),
         KeyCode::End => app.move_cursor(app.child_nodes.len() as i32),
         KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
-            app.filter_text.clear();
-            app.render_tree_nodes();
+            app.clear_search_text();
         }
         KeyCode::Backspace => {
-            app.filter_text.pop();
-            app.render_tree_nodes();
+            app.backspace_search_text();
         }
         KeyCode::Char('w') if key_event.modifiers == KeyModifiers::CONTROL => {
-            app.filter_text.pop();
-            app.render_tree_nodes();
+            app.backspace_search_text();
         }
         KeyCode::Char(c) => {
-            app.filter_text.push(c);
-            app.render_tree_nodes();
+            app.type_search_text(c);
         }
         KeyCode::F(5) => {
             app.populate_current_child_nodes();

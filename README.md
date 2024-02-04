@@ -36,11 +36,16 @@ Navigate with keyboard:
 - Type in the phrase of a filename to filter the list of files
 - Enter to select a file, exit and print its path to stdout.
 
+## Examples
 You can use it in combination with other commands, for example to print the selected file:
 ```sh
 cat `fpick`
 ```
-or change directory interactively:
+
+Tired of typing `ls` and `cd ...`, over and over again,
+just to find a file in a deeply nested directory tree?
+Use `fpick` to navigate through directories interactively.
+
 ```sh
 cd `fpick`
 ```
