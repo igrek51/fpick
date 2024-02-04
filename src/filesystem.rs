@@ -20,7 +20,8 @@ pub enum FileType {
 }
 
 pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
-    let dir_entries: ReadDir = fs::read_dir(dir_path).context("failed to read directory")?;
+    let dir_entries: ReadDir = fs::read_dir(dir_path)
+        .with_context(|| format!("failed to read directory '{}'", dir_path.to_string_lossy()))?;
 
     let files: Vec<FileNode> = dir_entries
         .filter_map(|entry| {
@@ -74,7 +75,12 @@ pub fn get_path_file_nodes(path: &String) -> Result<Vec<FileNode>> {
         true => PathBuf::from("."),
         false => PathBuf::from(&path),
     };
-    let absolute = fs::canonicalize(&start_pathbuf).context("evaluating absolute path")?;
+    let absolute = fs::canonicalize(&start_pathbuf).with_context(|| {
+        format!(
+            "evaluating absolute path '{}'",
+            start_pathbuf.to_string_lossy()
+        )
+    })?;
     let path_parts: Vec<&str> = absolute.to_str().unwrap().split('/').collect();
 
     let nodes: Vec<FileNode> = path_parts

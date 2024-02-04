@@ -83,14 +83,11 @@ impl App {
     }
 
     pub fn get_current_string_path(&self) -> String {
-        let mut all_names = self
+        let all_names = self
             .parent_nodes
             .iter()
             .map(|node| node.name.to_string())
             .collect::<Vec<String>>();
-        if !self.starting_dir.is_empty() {
-            all_names.insert(0, self.starting_dir.clone());
-        }
         if all_names.is_empty() {
             return "/".to_string();
         }
@@ -103,8 +100,9 @@ impl App {
 
         let nodes_result = list_files(std::path::Path::new(&path));
         if nodes_result.is_err() {
-            self.error_message = Some(nodes_result.unwrap_err().to_string());
+            self.error_message = Some(contextualized_error(&nodes_result.unwrap_err()));
             self.child_nodes = vec![];
+            self.render_tree_nodes();
             return;
         }
         let mut nodes = nodes_result.unwrap();
@@ -185,16 +183,12 @@ impl App {
         }
         let selected_node: FileNode = selected_node_o.unwrap();
 
-        let mut all_names = self
-            .parent_nodes
-            .iter()
-            .map(|node| node.name.to_string())
-            .collect::<Vec<String>>();
-        if !self.starting_dir.is_empty() {
-            all_names.insert(0, self.starting_dir.clone());
-        }
-        all_names.push(selected_node.name.to_string());
-        let selected_path = normalize_path(all_names.join("/"));
+        let current_path = self.get_current_string_path();
+        let selected_path = normalize_path(format!(
+            "{}/{}",
+            current_path,
+            selected_node.name.to_string()
+        ));
 
         self.picked_path = Some(selected_path);
         self.quit();

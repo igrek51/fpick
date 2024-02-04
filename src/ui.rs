@@ -78,17 +78,30 @@ fn render_error_popup(app: &mut App, frame: &mut Frame) {
         .bg(Color::Red)
         .border_type(BorderType::Rounded);
 
-    let widget = Paragraph::new(error_message)
+    let error_window = Paragraph::new(error_message)
         .wrap(Wrap { trim: true })
         .block(title)
         .style(Style::default().fg(Color::White));
 
+    let ok_label = Paragraph::new("OK")
+        .style(Style::default().bold().fg(Color::LightRed).bg(Color::White))
+        .alignment(Alignment::Center);
+
     let width: u16 = (frame.size().width as f32 * 0.75f32) as u16;
     let height: u16 = frame.size().height / 2;
     let area = centered_rect(width, height, frame.size());
+
+    let ok_label_area = Rect {
+        x: area.x + 1,
+        y: area.y + area.height - 2,
+        width: area.width - 2,
+        height: 1,
+    };
+
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
-    frame.render_widget(widget, area);
+    frame.render_widget(error_window, area);
+    frame.render_widget(ok_label, ok_label_area);
 }
 
 fn centered_rect(w: u16, h: u16, r: Rect) -> Rect {
