@@ -18,10 +18,10 @@ impl App {
                 std::process::exit(0);
             } else if last == "--help" {
                 println!("fpick - interactive file picker. Usage:");
-                println!("fpick - to select a file in a current directory and return its path");
-                println!("fpick <path> - to select a file starting from a specified directory");
-                println!("fpick --version - to print version");
-                println!("fpick --help - to print usage");
+                println!("  `fpick` to select a file in a current directory and return its path");
+                println!("  `fpick <path>` to select a file starting from a specified directory");
+                println!("  `fpick --version` to print version");
+                println!("  `fpick --help` to print usage");
                 std::process::exit(0);
             } else {
                 self.starting_dir = trim_end_slash(last.to_string());

@@ -10,6 +10,8 @@
     <a href="https://docs.rs/crate/fpick/">docs.rs</a>
 </div>
 
+![](./docs/img/screenshot1.png)
+
 ## Installation
 ### Cargo
 ```sh
@@ -30,11 +32,11 @@ Launch the interactive file picker by running `fpick`.
 
 Navigate with keyboard:
 
-- Up & Down to move between files and directories,
-- Left to go up,
-- Right to enter a directory.
-- Type in the phrase of a filename to filter the list of files
-- Enter to select a file, exit and print its path to stdout.
+- `↑` and `↓` to move between files and directories,
+- `→` to enter a directory.
+- `←` to go up,
+- Type a phrase to filter the list of files
+- `Enter` to select a file, exit and print its path to stdout.
 
 ## Examples
 You can use it in combination with other commands, for example to print the selected file:
@@ -42,10 +44,9 @@ You can use it in combination with other commands, for example to print the sele
 cat `fpick`
 ```
 
-Tired of typing `ls` and `cd ...`, over and over again,
+Tired of typing `ls` and `cd`, over and over again,
 just to find a file in a deeply nested directory tree?
-Use `fpick` to navigate through directories interactively.
-
+Use `fpick` to navigate through directories interactively:
 ```sh
 cd `fpick`
 ```
