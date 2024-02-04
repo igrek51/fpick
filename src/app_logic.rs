@@ -1,7 +1,9 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::app::App;
-use crate::filesystem::{list_files, normalize_path, trim_end_slash, FileNode};
+use crate::filesystem::{
+    get_path_file_nodes, list_files, normalize_path, trim_end_slash, FileNode,
+};
 use crate::numbers::ClampNumExt;
 use crate::tree::render_tree_nodes;
 
@@ -26,6 +28,10 @@ impl App {
         } else if args.len() > 2 {
             return Err(anyhow!("unrecognized arguments. Use --help for usage"));
         }
+
+        self.parent_nodes =
+            get_path_file_nodes(&self.starting_dir).context("getting path nodes")?;
+
         Ok(())
     }
 
@@ -80,9 +86,10 @@ impl App {
             all_names.insert(0, self.starting_dir.clone());
         }
         if all_names.is_empty() {
-            return ".".to_string();
+            return "/".to_string();
         }
-        return normalize_path(all_names.join("/"));
+        let path = format!("/{}", all_names.join("/"));
+        return normalize_path(path);
     }
 
     pub fn populate_current_child_nodes(&mut self) {

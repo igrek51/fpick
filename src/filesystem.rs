@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::fs::{self, symlink_metadata, ReadDir};
 use std::fs::{metadata, DirEntry};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct FileNode {
@@ -67,4 +67,32 @@ pub fn trim_end_slash(path: String) -> String {
 
 pub fn normalize_path(path: String) -> String {
     path.replace("//", "/")
+}
+
+pub fn get_path_file_nodes(path: &String) -> Result<Vec<FileNode>> {
+    let start_pathbuf = match path.is_empty() {
+        true => PathBuf::from("."),
+        false => PathBuf::from(&path),
+    };
+    let absolute = fs::canonicalize(&start_pathbuf).context("evaluating absolute path")?;
+    let path_parts: Vec<&str> = absolute.to_str().unwrap().split('/').collect();
+
+    let nodes: Vec<FileNode> = path_parts
+        .iter()
+        .filter_map(|name: &&str| match name.len() {
+            0 => None,
+            _ => {
+                let lowercase_name = name.to_lowercase();
+                Some(FileNode {
+                    name: name.to_string(),
+                    file_type: FileType::Directory,
+                    lowercase_name,
+                    is_symlink: false,
+                    is_directory: false,
+                })
+            }
+        })
+        .collect();
+
+    Ok(nodes)
 }
