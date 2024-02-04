@@ -23,7 +23,7 @@ This will install `fpick` binary in Rust's Path.
 Alternatively, you can download the compiled binary:
 
 ```sh
-curl -L https://github.com/igrek51/fpick/releases/download/0.2.0/fpick -o ~/bin/fpick
+curl -L https://github.com/igrek51/fpick/releases/download/0.3.0/fpick -o ~/bin/fpick
 chmod +x ~/bin/fpick
 ```
 
@@ -37,6 +37,8 @@ Navigate with keyboard:
 - `←` to go up,
 - Type a phrase to filter the list of files
 - `Enter` to select a file, exit and print its path to stdout.
+
+See `fpick --help` for more options.
 
 ## Examples
 You can use it in combination with other commands, for example to print the selected file:
