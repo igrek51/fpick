@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Result};
+use crossterm::tty::IsTty;
 use relative_path::{PathExt, RelativePathBuf, RelativeToError};
 use std::fs;
+use std::io::stdout;
 use std::path::{Path, PathBuf};
 
 use crate::app::App;
@@ -39,6 +41,9 @@ impl App {
                 "--relative" | "--rel" | "-r" => {
                     self.relative_path = true;
                 }
+                "--stderr" => {
+                    self.print_stderr = true;
+                }
                 _ => {
                     if !self.starting_dir.is_empty() {
                         return Err(anyhow!(
@@ -75,6 +80,9 @@ impl App {
     pub fn post_exit(&mut self) {
         if let Some(picked_path) = &self.picked_path {
             println!("{}", picked_path);
+            if !stdout().is_tty() && self.print_stderr {
+                eprintln!("{}", picked_path);
+            }
         } else {
             self.exit_code = 1;
         }

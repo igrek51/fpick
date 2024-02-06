@@ -13,6 +13,7 @@ pub struct App {
     pub should_quit: bool,
     pub starting_dir: String,
     pub relative_path: bool,
+    pub print_stderr: bool,
     pub parent_nodes: Vec<FileNode>, // nodes leading to the current directory
     pub child_nodes: Vec<FileNode>,  // nodes in the current directory
     pub child_tree_nodes: Vec<TreeNode>, // nodes of whole filesystem tree
