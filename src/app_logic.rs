@@ -243,6 +243,7 @@ impl App {
     pub fn type_search_text(&mut self, c: char) {
         self.filter_text.push(c);
         self.render_tree_nodes();
+        self.set_dir_cursor(0);
     }
 
     pub fn backspace_search_text(&mut self) {
