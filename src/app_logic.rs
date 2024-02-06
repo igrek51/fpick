@@ -1,4 +1,7 @@
 use anyhow::{anyhow, Context, Result};
+use relative_path::{PathExt, RelativePathBuf, RelativeToError};
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::app::App;
 use crate::errors::contextualized_error;
@@ -8,26 +11,43 @@ use crate::filesystem::{
 use crate::numbers::ClampNumExt;
 use crate::tree::render_tree_nodes;
 
+const HELP_TEXT: &str = "fpick - interactive file picker. Usage:
+  `fpick [OPTIONS]` to select a file in a current directory and return its path
+  `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
+
+Options:
+    --relative, --rel, -r  Print selected path as relative to the starting directory
+    --version              Print version
+    --help, -h             Print usage
+";
+
 impl App {
     pub fn pre_init(&mut self) -> Result<()> {
-        let args: Vec<String> = std::env::args().collect();
-        if args.len() == 2 {
-            let last: &String = args.last().unwrap();
-            if last == "--version" {
-                println!("{}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
-            } else if last == "--help" {
-                println!("fpick - interactive file picker. Usage:");
-                println!("  `fpick` to select a file in a current directory and return its path");
-                println!("  `fpick <path>` to select a file starting from a specified directory");
-                println!("  `fpick --version` to print version");
-                println!("  `fpick --help` to print usage");
-                std::process::exit(0);
-            } else {
-                self.starting_dir = trim_end_slash(last.to_string());
+        let mut args: Vec<String> = std::env::args().collect::<Vec<String>>()[1..].to_vec();
+        args.reverse();
+        while args.len() > 0 {
+            let arg = args.pop().unwrap();
+            match arg.as_str() {
+                "--version" => {
+                    println!("{}", env!("CARGO_PKG_VERSION"));
+                    std::process::exit(0);
+                }
+                "--help" | "-h" => {
+                    print!("{}", HELP_TEXT);
+                    std::process::exit(0);
+                }
+                "--relative" | "--rel" | "-r" => {
+                    self.relative_path = true;
+                }
+                _ => {
+                    if !self.starting_dir.is_empty() {
+                        return Err(anyhow!(
+                            "unrecognized arguments or too many arguments. Use --help for usage"
+                        ));
+                    }
+                    self.starting_dir = trim_end_slash(arg.to_string());
+                }
             }
-        } else if args.len() > 2 {
-            return Err(anyhow!("unrecognized arguments. Use --help for usage"));
         }
         Ok(())
     }
@@ -190,7 +210,33 @@ impl App {
             selected_node.name.to_string()
         ));
 
-        self.picked_path = Some(selected_path);
+        self.picked_path = match self.relative_path {
+            true => {
+                let selected_path: &Path = Path::new(&selected_path);
+                let starting_path: &Path = match self.starting_dir.is_empty() {
+                    true => Path::new("."),
+                    false => Path::new(&self.starting_dir),
+                };
+                let starting_path_abs: PathBuf = fs::canonicalize(&starting_path).unwrap();
+
+                let relative_path_r: Result<RelativePathBuf, RelativeToError> =
+                    selected_path.relative_to(starting_path_abs);
+                let relative_path: String = match relative_path_r {
+                    Err(_) => {
+                        self.error_message = Some(format!(
+                            "Selected path is not relative to the starting directory"
+                        ));
+                        return;
+                    }
+                    Ok(res) => res.to_string(),
+                };
+                match relative_path.is_empty() {
+                    true => Some(String::from(".")),
+                    false => Some(relative_path.to_string()),
+                }
+            }
+            false => Some(selected_path),
+        };
         self.quit();
     }
 

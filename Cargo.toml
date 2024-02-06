@@ -1,6 +1,6 @@
 [package]
 name = "fpick"
-version = "0.3.0"
+version = "0.3.1"
 license = "MIT"
 edition = "2021"
 description = "Interactive file picker"
@@ -15,6 +15,7 @@ anyhow = "1.0.75"
 crossterm = "0.27.0"
 itertools = "0.12.0"
 ratatui = "0.25.0"
+relative-path = "1.9.2"
 signal-hook = "0.3.17"
 
 [[bin]]

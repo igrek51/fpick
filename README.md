@@ -40,6 +40,16 @@ Navigate with keyboard:
 
 See `fpick --help` for more options.
 
+## CLI arguments
+Usage:
+- `fpick [OPTIONS]` to select a file in a current directory and return its path
+- `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
+
+Options:
+- `--relative`, `--rel`, `-r` - Print selected path as relative to the starting directory
+- `--version` - Print version
+- `--help`, `-h` - Print usage
+
 ## Examples
 You can use it in combination with other commands, for example to print the selected file:
 ```sh
