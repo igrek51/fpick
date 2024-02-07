@@ -32,12 +32,24 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
         .map(|it: &TreeNode| it.render_list_item())
         .collect();
 
+    let max_title_w = area.width as usize - 2;
+    let mut title_text = app.get_current_string_path();
+    if title_text.len() > max_title_w {
+        let split_pos = title_text
+            .char_indices()
+            .nth_back(max_title_w - 1 - 1)
+            .unwrap()
+            .0;
+        title_text = format!("…{}", &title_text[split_pos..]);
+    }
+
     let title_block = Block::default()
-        .title(app.get_current_string_path())
+        .title(title_text)
         .title_style(Style::new().bold())
         .title_alignment(Alignment::Left)
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
+
     let widget = List::new(list_items)
         .block(title_block)
         .style(Style::default().fg(Color::White))
