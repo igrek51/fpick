@@ -102,3 +102,27 @@ pub fn get_path_file_nodes(path: &String) -> Result<Vec<FileNode>> {
 
     Ok(nodes)
 }
+
+pub fn get_string_abs_path(nodes: &Vec<FileNode>) -> String {
+    let all_names = nodes
+        .iter()
+        .map(|node| node.name.to_string())
+        .collect::<Vec<String>>();
+    if all_names.is_empty() {
+        return "/".to_string();
+    }
+    let path = format!("/{}", all_names.join("/"));
+    normalize_path(path)
+}
+
+pub fn nodes_start_with(nodes: &Vec<FileNode>, start: &Vec<FileNode>) -> bool {
+    if nodes.len() < start.len() {
+        return false;
+    }
+    for (i, node) in start.iter().enumerate() {
+        if nodes[i].name != node.name {
+            return false;
+        }
+    }
+    true
+}

@@ -8,7 +8,8 @@ use std::path::{Path, PathBuf};
 use crate::app::App;
 use crate::errors::contextualized_error;
 use crate::filesystem::{
-    get_path_file_nodes, list_files, normalize_path, trim_end_slash, FileNode,
+    get_path_file_nodes, get_string_abs_path, list_files, nodes_start_with, trim_end_slash,
+    FileNode,
 };
 use crate::numbers::ClampNumExt;
 use crate::tree::render_tree_nodes;
@@ -18,7 +19,8 @@ const HELP_TEXT: &str = "fpick - interactive file picker. Usage:
   `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
 
 Options:
-    --relative, --rel, -r  Print selected path as relative to the starting directory
+    --relative, --rel, -r  Always print chosen path as relative to the starting directory
+    --absolute, --abs, -a  Always print chosen path as absolute directory
     --version              Print version
     --help, -h             Print usage
 ";
@@ -40,6 +42,9 @@ impl App {
                 }
                 "--relative" | "--rel" | "-r" => {
                     self.relative_path = true;
+                }
+                "--absolute" | "--abs" | "-a" => {
+                    self.absolute_path = true;
                 }
                 "--stderr" => {
                     self.print_stderr = true;
@@ -66,6 +71,7 @@ impl App {
     pub fn init(&mut self) -> Result<()> {
         self.parent_nodes =
             get_path_file_nodes(&self.starting_dir).context("reading path nodes")?;
+        self.starting_dir_nodes = self.parent_nodes.clone();
         self.populate_current_child_nodes();
         self.set_dir_cursor(0);
         Ok(())
@@ -111,16 +117,7 @@ impl App {
     }
 
     pub fn get_current_string_path(&self) -> String {
-        let all_names = self
-            .parent_nodes
-            .iter()
-            .map(|node| node.name.to_string())
-            .collect::<Vec<String>>();
-        if all_names.is_empty() {
-            return "/".to_string();
-        }
-        let path = format!("/{}", all_names.join("/"));
-        return normalize_path(path);
+        get_string_abs_path(&self.parent_nodes)
     }
 
     pub fn populate_current_child_nodes(&mut self) {
@@ -211,41 +208,49 @@ impl App {
         }
         let selected_node: FileNode = selected_node_o.unwrap();
 
-        let current_path = self.get_current_string_path();
-        let selected_path = normalize_path(format!(
-            "{}/{}",
-            current_path,
-            selected_node.name.to_string()
-        ));
+        let mut chosen_nodes: Vec<FileNode> = self.parent_nodes.clone();
+        chosen_nodes.push(selected_node);
+        let chosen_path: String = get_string_abs_path(&chosen_nodes);
 
-        self.picked_path = match self.relative_path {
-            true => {
-                let selected_path: &Path = Path::new(&selected_path);
-                let starting_path: &Path = match self.starting_dir.is_empty() {
-                    true => Path::new("."),
-                    false => Path::new(&self.starting_dir),
-                };
-                let starting_path_abs: PathBuf = fs::canonicalize(&starting_path).unwrap();
-
-                let relative_path_r: Result<RelativePathBuf, RelativeToError> =
-                    selected_path.relative_to(starting_path_abs);
-                let relative_path: String = match relative_path_r {
-                    Err(_) => {
-                        self.error_message = Some(format!(
-                            "Selected path is not relative to the starting directory"
-                        ));
-                        return;
-                    }
-                    Ok(res) => res.to_string(),
-                };
-                match relative_path.is_empty() {
-                    true => Some(String::from(".")),
-                    false => Some(relative_path.to_string()),
-                }
-            }
-            false => Some(selected_path),
+        self.picked_path = match self.determine_relative_mode(&chosen_nodes) {
+            true => self.make_relative_path(&chosen_path),
+            false => Some(chosen_path),
         };
-        self.quit();
+        if !self.picked_path.is_none() {
+            self.quit();
+        }
+    }
+
+    pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {
+        if self.absolute_path {
+            return false;
+        }
+        self.relative_path || nodes_start_with(&chosen_nodes, &self.starting_dir_nodes)
+    }
+
+    pub fn make_relative_path(&mut self, chosen_path: &String) -> Option<String> {
+        let selected_path: &Path = Path::new(&chosen_path);
+        let starting_path: &Path = match self.starting_dir.is_empty() {
+            true => Path::new("."),
+            false => Path::new(&self.starting_dir),
+        };
+        let starting_path_abs: PathBuf = fs::canonicalize(&starting_path).unwrap();
+
+        let relative_path_r: Result<RelativePathBuf, RelativeToError> =
+            selected_path.relative_to(starting_path_abs);
+        let relative_path: String = match relative_path_r {
+            Err(_) => {
+                self.error_message = Some(format!(
+                    "Selected path is not relative to the starting directory"
+                ));
+                return None;
+            }
+            Ok(res) => res.to_string(),
+        };
+        match relative_path.is_empty() {
+            true => Some(String::from(".")),
+            false => Some(relative_path.to_string()),
+        }
     }
 
     pub fn type_search_text(&mut self, c: char) {
