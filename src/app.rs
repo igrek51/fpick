@@ -5,6 +5,7 @@ use std::sync::mpsc;
 use std::thread;
 
 use crate::filesystem::FileNode;
+use crate::logs::print_logs;
 use crate::tree::TreeNode;
 use crate::tui::Tui;
 
@@ -50,6 +51,7 @@ impl App {
 
         tui.exit()?;
         self.post_exit();
+        print_logs();
         Ok(())
     }
 

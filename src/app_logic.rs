@@ -221,6 +221,17 @@ impl App {
         }
     }
 
+    pub fn pick_current_dir(&mut self) {
+        let chosen_path: String = get_string_abs_path(&self.parent_nodes);
+        self.picked_path = match self.determine_relative_mode(&self.parent_nodes) {
+            true => self.make_relative_path(&chosen_path),
+            false => Some(chosen_path),
+        };
+        if !self.picked_path.is_none() {
+            self.quit();
+        }
+    }
+
     pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {
         if self.absolute_path {
             return false;

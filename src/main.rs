@@ -3,6 +3,7 @@ mod app_logic;
 mod errors;
 mod event;
 mod filesystem;
+mod logs;
 mod numbers;
 mod tree;
 mod tui;
