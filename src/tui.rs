@@ -21,7 +21,7 @@ impl Tui {
     }
 
     pub fn enter(&mut self) -> Result<()> {
-        terminal::enable_raw_mode()?;
+        terminal::enable_raw_mode()?; // https://docs.rs/crossterm/latest/crossterm/terminal/index.html#raw-mode
         crossterm::execute!(io::stderr(), EnterAlternateScreen,)?;
 
         let panic_hook = panic::take_hook();
