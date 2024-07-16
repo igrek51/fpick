@@ -1,9 +1,3 @@
-use std::fmt::Display;
-
-pub trait Numeric: Into<u64> + Display + Copy {}
-impl Numeric for u32 {}
-impl Numeric for u64 {}
-
 pub trait ClampNumExt<T> {
     fn clamp_min(&self, min: T) -> T;
     fn clamp_max(&self, max: T) -> T;

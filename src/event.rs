@@ -15,7 +15,7 @@ pub enum Event {
     /// Key press.
     Key(KeyEvent),
     /// Terminal resize.
-    Resize(u16, u16),
+    Resize,
 }
 
 /// Terminal event handler.
@@ -53,7 +53,7 @@ impl EventHandler {
                                     Ok(()) // ignore KeyEventKind::Release on windows
                                 }
                             }
-                            CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
+                            CrosstermEvent::Resize(_, _) => sender.send(Event::Resize),
                             _ => unimplemented!(),
                         }
                         .expect("failed to send terminal event")

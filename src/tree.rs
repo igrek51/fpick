@@ -8,7 +8,6 @@ use crate::filesystem::FileNode;
 
 #[derive(Debug, Clone)]
 pub struct TreeNode {
-    pub indent: i32,
     pub relevance: i32,
     pub file_node: FileNode,
 }
@@ -60,7 +59,6 @@ pub fn render_tree_nodes(child_nodes: &Vec<FileNode>, filter_text: &str) -> Vec<
     let mut current_tree_nodes: Vec<TreeNode> = child_nodes
         .iter()
         .map(|it: &FileNode| TreeNode {
-            indent: 0,
             relevance: evaluate_relevance(it.lowercase_name.as_str(), &filter_words),
             file_node: it.clone(),
         })

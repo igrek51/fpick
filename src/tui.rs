@@ -45,7 +45,7 @@ impl Tui {
         match self.events.next()? {
             Event::Tick => app.tick(),
             Event::Key(key_event) => update(app, key_event),
-            Event::Resize(_, _) => {}
+            Event::Resize => {}
         };
         Ok(())
     }

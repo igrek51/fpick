@@ -14,8 +14,9 @@ pub fn update(app: &mut App, key_event: KeyEvent) {
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
         KeyCode::Left => app.go_up(),
+        KeyCode::Char('?') => app.go_to_root(), // Shift + /
         KeyCode::Right | KeyCode::Tab | KeyCode::Char('/') => app.go_into(),
-        KeyCode::F(1) | KeyCode::F(2) | KeyCode::Char('>') => app.pick_current_dir(),
+        KeyCode::F(1) | KeyCode::F(2) | KeyCode::Char('>') => app.pick_current_dir(), // Shift + .
         KeyCode::F(5) => app.populate_current_child_nodes(),
         KeyCode::Enter => app.pick_file(),
         KeyCode::PageDown => app.move_cursor(20),

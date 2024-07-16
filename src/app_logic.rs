@@ -198,6 +198,14 @@ impl App {
         self.set_dir_cursor(0);
     }
 
+    pub fn go_to_root(&mut self) {
+        self.parent_nodes = vec![];
+        self.filter_text.clear();
+        self.populate_current_child_nodes();
+        self.reset_cursor_offset();
+        self.set_dir_cursor(0);
+    }
+
     pub fn pick_file(&mut self) {
         if self.child_tree_nodes.is_empty() {
             return;
