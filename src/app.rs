@@ -19,7 +19,7 @@ pub struct App {
     pub parent_nodes: Vec<FileNode>, // nodes leading to the current directory
     pub starting_dir_nodes: Vec<FileNode>, // nodes leading to the starting directory
     pub child_nodes: Vec<FileNode>,  // nodes in the current directory
-    pub child_tree_nodes: Vec<TreeNode>, // nodes of whole filesystem tree
+    pub child_tree_nodes: Vec<TreeNode>, // nodes of filesystem tree to display
     pub dir_cursor: usize,
     pub filter_text: String,
     pub file_tree_state: ListState,

@@ -3,7 +3,7 @@ use std::fs::{self, symlink_metadata, ReadDir};
 use std::fs::{metadata, DirEntry};
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FileNode {
     pub name: String,
     pub file_type: FileType,
