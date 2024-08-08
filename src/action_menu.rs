@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
-use std::process::Command;
+use anyhow::Result;
+use std::process::{Command, Stdio};
 
 use crate::logs::log;
 
@@ -13,11 +13,11 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
     vec![
         MenuAction {
             name: "Edit in vim",
-            command: "vim \"{}\"",
+            command: "gnome-terminal -- vim \"{}\"",
         },
         MenuAction {
             name: "Open in less",
-            command: "less \"{}\"",
+            command: "gnome-terminal -- less \"{}\"",
         },
         MenuAction {
             name: "Delete file",
@@ -31,14 +31,6 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             name: "Copy filename to clipboard",
             command: "echo \"{}\" | xclip",
         },
-        // MenuAction {
-        //     name: "Return absolute path",
-        //     command: "",
-        // },
-        // MenuAction {
-        //     name: "Return relative path",
-        //     command: "",
-        // },
     ]
 }
 
@@ -46,10 +38,13 @@ pub fn run_menu_action(path: &String, menu_action: &MenuAction) -> Result<()> {
     let command = menu_action.command;
     let cmd = String::from(command).replace("{}", path);
     log(format!("Executing command: {:?}", cmd).as_str());
-    Command::new("sh")
+    let mut c = Command::new("sh")
         .arg("-c")
         .arg(cmd.clone())
-        .output()
-        .context(format!("failed to execute command: {:?}", cmd))?;
+        .stdin(Stdio::inherit())
+        .stderr(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
+    c.wait()?;
     Ok(())
 }

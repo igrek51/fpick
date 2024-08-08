@@ -45,7 +45,7 @@ impl App {
         self.pre_init()?;
         let signal_rx = self.handle_signals();
         self.init_catch();
-        let mut tui = Tui::new();
+        let mut tui: Tui = Tui::new();
         tui.enter()?;
 
         while !self.should_quit {

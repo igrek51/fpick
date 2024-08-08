@@ -1,11 +1,11 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{app::App, appdata::WindowFocus, logs::log};
+use crate::{app::App, appdata::WindowFocus, logs::log, tui::Tui};
 
-pub fn update(app: &mut App, key_event: KeyEvent) {
+pub fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match app.window_focus {
         WindowFocus::Tree => on_key_tree(app, key_event),
-        WindowFocus::ActionMenu => on_key_action_menu(app, key_event),
+        WindowFocus::ActionMenu => on_key_action_menu(app, key_event, tui),
     }
 }
 
@@ -49,7 +49,7 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
     };
 }
 
-pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent) {
+pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match key_event.code {
         KeyCode::Enter if app.has_error() => app.clear_error(),
         KeyCode::Esc if app.has_error() => app.clear_error(),
@@ -59,7 +59,7 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent) {
         }
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
-        KeyCode::Enter => app.call_dialog_action(),
+        KeyCode::Enter => app.call_dialog_action(tui),
         _ => {
             log(format!("Key event: {:?}", key_event).as_str());
         }

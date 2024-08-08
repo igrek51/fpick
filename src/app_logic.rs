@@ -15,6 +15,7 @@ use crate::filesystem::{
 };
 use crate::numbers::ClampNumExt;
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
+use crate::tui::Tui;
 
 const HELP_TEXT: &str = "fpick - interactive file picker. 
 Navigate with arrow keys and enter. It returns the selected path to standard output.
@@ -383,14 +384,16 @@ impl App {
         self.window_focus = WindowFocus::Tree;
     }
 
-    pub fn call_dialog_action(&mut self) {
+    pub fn call_dialog_action(&mut self, tui: &mut Tui) {
         let path = self.get_selected_abs_path();
         if path.is_none() {
             return;
         }
 
         let action: &MenuAction = &self.known_menu_actions[self.action_cursor];
+        tui.exit().expect("failed to exit the terminal mode");
         let res = run_menu_action(&path.unwrap(), action);
+        tui.enter().expect("failed to enter the terminal mode back");
         if res.is_err() {
             self.error_message = Some(res.err().unwrap().to_string());
             return;
