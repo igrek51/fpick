@@ -1,3 +1,5 @@
+use crate::action_menu::MenuAction;
+use crate::appdata::WindowFocus;
 use crate::numbers::ClampNumExt;
 use ratatui::{prelude::*, widgets::*};
 use ratatui::{
@@ -20,6 +22,9 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     render_dir_tree(app, frame, layout[0]);
     render_filter_panel(app, frame, layout[1]);
+    if app.window_focus == WindowFocus::ActionMenu {
+        render_action_popup(app, frame);
+    }
     if app.error_message.is_some() {
         render_error_popup(app, frame);
     }
@@ -74,6 +79,38 @@ fn render_filter_panel(app: &mut App, frame: &mut Frame, area: Rect) {
         .alignment(Alignment::Left);
 
     frame.render_widget(widget, area);
+}
+
+fn render_action_popup(app: &mut App, frame: &mut Frame) {
+    let list_items: Vec<ListItem> = app
+        .known_menu_actions
+        .iter()
+        .map(|it: &MenuAction| ListItem::new(it.name))
+        .collect();
+    let mut list_state = ListState::default().with_selected(Some(app.action_cursor));
+    let widget = List::new(list_items)
+        .block(
+            Block::default()
+                .title("Run action")
+                .borders(Borders::ALL)
+                .bg(Color::DarkGray),
+        )
+        .style(Style::default().fg(Color::White).bg(Color::DarkGray))
+        .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
+        .highlight_symbol(">> ");
+
+    let height = app.known_menu_actions.len() as u16 + 2;
+    let width: u16 = app
+        .known_menu_actions
+        .iter()
+        .map(|it: &MenuAction| it.name.len() as u16)
+        .max()
+        .unwrap_or(0)
+        + 8;
+    let area = centered_rect(width, height, frame.size());
+    let buffer = frame.buffer_mut();
+    Clear.render(area, buffer);
+    frame.render_stateful_widget(widget, area, &mut list_state);
 }
 
 fn render_error_popup(app: &mut App, frame: &mut Frame) {

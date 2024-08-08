@@ -5,7 +5,9 @@ use std::fs;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 
+use crate::action_menu::{run_menu_action, MenuAction};
 use crate::app::App;
+use crate::appdata::WindowFocus;
 use crate::errors::contextualized_error;
 use crate::filesystem::{
     get_path_file_nodes, get_string_abs_path, list_files, nodes_start_with, trim_end_slash,
@@ -14,7 +16,10 @@ use crate::filesystem::{
 use crate::numbers::ClampNumExt;
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
 
-const HELP_TEXT: &str = "fpick - interactive file picker. Usage:
+const HELP_TEXT: &str = "fpick - interactive file picker. 
+Navigate with arrow keys and enter. It returns the selected path to standard output.
+
+Usage:
   `fpick [OPTIONS]` to select a file in a current directory and return its path
   `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
 
@@ -110,10 +115,20 @@ impl App {
     }
 
     pub fn move_cursor(&mut self, delta: i32) {
-        let new_cursor = (self.dir_cursor as i32 + delta)
-            .clamp_max(self.child_tree_nodes.len() as i32 - 1)
-            .clamp_min(0) as usize;
-        self.set_dir_cursor(new_cursor);
+        match self.window_focus {
+            WindowFocus::Tree => {
+                let new_cursor = (self.dir_cursor as i32 + delta)
+                    .clamp_max(self.child_tree_nodes.len() as i32 - 1)
+                    .clamp_min(0) as usize;
+                self.set_dir_cursor(new_cursor);
+            }
+            WindowFocus::ActionMenu => {
+                let new_cursor = (self.action_cursor as i32 + delta)
+                    .clamp_max(self.known_menu_actions.len() as i32 - 1)
+                    .clamp_min(0) as usize;
+                self.action_cursor = new_cursor;
+            }
+        }
     }
 
     pub fn get_current_string_path(&self) -> String {
@@ -279,6 +294,27 @@ impl App {
         }
     }
 
+    pub fn get_selected_abs_path(&mut self) -> Option<String> {
+        if self.child_tree_nodes.is_empty() {
+            return None;
+        }
+        let selected_node_o: Option<&TreeNode> = self.get_selected_tree_node();
+        if selected_node_o.is_none() {
+            return None;
+        }
+        let selected_node: &TreeNode = selected_node_o.unwrap();
+        match &selected_node.kind {
+            TreeNodeType::SelfReference => {
+                return Some(get_string_abs_path(&self.parent_nodes));
+            }
+            TreeNodeType::FileNode(file_node) => {
+                let mut chosen_nodes: Vec<FileNode> = self.parent_nodes.clone();
+                chosen_nodes.push(file_node.clone());
+                return Some(get_string_abs_path(&chosen_nodes));
+            }
+        }
+    }
+
     pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {
         if self.absolute_path {
             return false;
@@ -333,5 +369,33 @@ impl App {
 
     pub fn clear_error(&mut self) {
         self.error_message = None;
+    }
+
+    pub fn open_action_dialog(&mut self) {
+        if self.child_tree_nodes.is_empty() {
+            return;
+        }
+        self.window_focus = WindowFocus::ActionMenu;
+        self.action_cursor = 0;
+    }
+
+    pub fn close_action_dialog(&mut self) {
+        self.window_focus = WindowFocus::Tree;
+    }
+
+    pub fn call_dialog_action(&mut self) {
+        let path = self.get_selected_abs_path();
+        if path.is_none() {
+            return;
+        }
+
+        let action: &MenuAction = &self.known_menu_actions[self.action_cursor];
+        let res = run_menu_action(&path.unwrap(), action);
+        if res.is_err() {
+            self.error_message = Some(res.err().unwrap().to_string());
+            return;
+        }
+
+        self.window_focus = WindowFocus::Tree;
     }
 }
