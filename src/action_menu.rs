@@ -29,7 +29,7 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         },
         MenuAction {
             name: "Copy filename to clipboard",
-            command: "echo \"{}\" | xclip",
+            command: "echo -n \"{}\" | xclip -selection clipboard",
         },
     ]
 }
