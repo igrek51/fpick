@@ -12,7 +12,7 @@ pub fn print_logs() {
     LOGS.with(|logs| {
         let vector: Vec<String> = logs.borrow().clone();
         for log in vector {
-            println!("{}", log);
+            eprintln!("{}", log);
         }
     });
 }

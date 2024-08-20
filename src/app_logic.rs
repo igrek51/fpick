@@ -391,9 +391,7 @@ impl App {
         }
 
         let action: &MenuAction = &self.known_menu_actions[self.action_cursor];
-        tui.exit().expect("failed to exit the terminal mode");
         let res = run_menu_action(&path.unwrap(), action);
-        tui.enter().expect("failed to enter the terminal mode back");
         if res.is_err() {
             self.error_message = Some(res.err().unwrap().to_string());
             return;
