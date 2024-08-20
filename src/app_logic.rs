@@ -384,7 +384,7 @@ impl App {
         self.window_focus = WindowFocus::Tree;
     }
 
-    pub fn call_dialog_action(&mut self, tui: &mut Tui) {
+    pub fn call_dialog_action(&mut self, _: &mut Tui) {
         let path = self.get_selected_abs_path();
         if path.is_none() {
             return;

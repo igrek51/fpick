@@ -103,13 +103,6 @@ pub fn render_tree_nodes(child_nodes: &Vec<FileNode>, filter_text: &str) -> Vec<
             kind: TreeNodeType::FileNode(it.clone()),
         })
         .collect();
-    current_tree_nodes.insert(
-        0,
-        TreeNode {
-            relevance: 0,
-            kind: TreeNodeType::SelfReference,
-        },
-    );
     current_tree_nodes = current_tree_nodes
         .iter()
         .map(|it: &TreeNode| TreeNode {
@@ -131,6 +124,16 @@ pub fn render_tree_nodes(child_nodes: &Vec<FileNode>, filter_text: &str) -> Vec<
             .then(a.is_directory().cmp(&b.is_directory()).reverse())
             .then(a.indexed_name().cmp(b.indexed_name()))
     });
+
+    if filter_text.is_empty() {
+        current_tree_nodes.insert(
+            0,
+            TreeNode {
+                relevance: 0,
+                kind: TreeNodeType::SelfReference,
+            },
+        );
+    }
 
     current_tree_nodes
 }
