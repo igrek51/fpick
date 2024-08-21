@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use std::process::{Command, Stdio};
 
 use crate::logs::log;
@@ -74,13 +74,29 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
 pub fn execute_shell_operation(path: &String, command_template: &str) -> Result<()> {
     let cmd = String::from(command_template).replace("{}", path);
     log(format!("Executing command: {:?}", cmd).as_str());
-    let mut c = Command::new("sh")
+    let c = Command::new("sh")
         .arg("-c")
         .arg(cmd.clone())
         .stdin(Stdio::inherit())
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())
-        .spawn()?;
-    c.wait()?;
+        .spawn()
+        .context("failed to start a command")?;
+    let output = c
+        .wait_with_output()
+        .context("failed to read command output")?;
+
+    if !output.status.success() {
+        let error = format!(
+            "Failed to execute command: {:?}, {}\n{}\n{}",
+            cmd,
+            output.status,
+            String::from_utf8_lossy(&output.stderr),
+            String::from_utf8_lossy(&output.stdout),
+        );
+        log(error.as_str());
+        return Err(anyhow!(error));
+    }
+
     Ok(())
 }

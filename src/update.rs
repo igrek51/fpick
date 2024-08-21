@@ -34,18 +34,12 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
         KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.clear_search_text();
         }
-        KeyCode::Backspace => {
-            app.backspace_search_text();
-        }
+        KeyCode::Backspace => app.backspace_search_text(),
         KeyCode::Char('w') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.backspace_search_text();
         }
-        KeyCode::Char(c) => {
-            app.type_search_text(c);
-        }
-        _ => {
-            log(format!("Key event: {:?}", key_event).as_str());
-        }
+        KeyCode::Char(c) => app.type_search_text(c),
+        _ => log(format!("Key event: {:?}", key_event).as_str()),
     };
 }
 
