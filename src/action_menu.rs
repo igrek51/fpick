@@ -6,37 +6,73 @@ use crate::logs::log;
 #[derive(Debug, Clone)]
 pub struct MenuAction {
     pub name: &'static str,
-    pub command: &'static str,
+    pub operation: Operation,
+}
+
+#[derive(Debug, Clone)]
+pub enum Operation {
+    ShellCommand { template: &'static str },
+    PickAbsolutePath,
+    PickRelativePath,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
     vec![
         MenuAction {
-            name: "Edit in vim",
-            command: "gnome-terminal -- vim \"{}\"",
+            name: "Open",
+            operation: Operation::ShellCommand {
+                template: "xdg-open \"{}\"",
+            },
         },
         MenuAction {
-            name: "Open in less",
-            command: "gnome-terminal -- less \"{}\"",
+            name: "Show in less",
+            operation: Operation::ShellCommand {
+                template: "gnome-terminal -- less \"{}\"",
+            },
+        },
+        MenuAction {
+            name: "Edit in vim",
+            operation: Operation::ShellCommand {
+                template: "gnome-terminal -- vim \"{}\"",
+            },
+        },
+        MenuAction {
+            name: "Edit in sudo vim",
+            operation: Operation::ShellCommand {
+                template: "gnome-terminal -- sudo vim \"{}\"",
+            },
         },
         MenuAction {
             name: "Delete file",
-            command: "rm \"{}\"",
+            operation: Operation::ShellCommand {
+                template: "rm \"{}\"",
+            },
         },
         MenuAction {
             name: "Delete directory",
-            command: "rm -rf \"{}\"",
+            operation: Operation::ShellCommand {
+                template: "rm -rf \"{}\"",
+            },
         },
         MenuAction {
             name: "Copy filename to clipboard",
-            command: "echo -n \"{}\" | xclip -selection clipboard",
+            operation: Operation::ShellCommand {
+                template: "echo -n \"{}\" | xclip -selection clipboard",
+            },
+        },
+        MenuAction {
+            name: "Pick absolute path",
+            operation: Operation::PickAbsolutePath,
+        },
+        MenuAction {
+            name: "Pick relative path",
+            operation: Operation::PickRelativePath,
         },
     ]
 }
 
-pub fn run_menu_action(path: &String, menu_action: &MenuAction) -> Result<()> {
-    let command = menu_action.command;
-    let cmd = String::from(command).replace("{}", path);
+pub fn execute_shell_operation(path: &String, command_template: &str) -> Result<()> {
+    let cmd = String::from(command_template).replace("{}", path);
     log(format!("Executing command: {:?}", cmd).as_str());
     let mut c = Command::new("sh")
         .arg("-c")

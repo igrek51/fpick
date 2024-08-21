@@ -5,13 +5,13 @@ use std::fs;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 
-use crate::action_menu::{run_menu_action, MenuAction};
+use crate::action_menu::{execute_shell_operation, MenuAction, Operation};
 use crate::app::App;
 use crate::appdata::WindowFocus;
 use crate::errors::contextualized_error;
 use crate::filesystem::{
     get_path_file_nodes, get_string_abs_path, list_files, nodes_start_with, trim_end_slash,
-    FileNode,
+    FileNode, FileType,
 };
 use crate::numbers::ClampNumExt;
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
@@ -75,16 +75,16 @@ impl App {
     }
 
     pub fn init(&mut self) -> Result<()> {
-        self.parent_nodes =
+        self.parent_file_nodes =
             get_path_file_nodes(&self.starting_dir).context("reading path nodes")?;
-        self.starting_dir_nodes = self.parent_nodes.clone();
+        self.starting_dir_nodes = self.parent_file_nodes.clone();
         self.populate_current_child_nodes();
         self.set_dir_cursor(0);
         Ok(())
     }
 
     pub fn render_tree_nodes(&mut self) {
-        self.child_tree_nodes = render_tree_nodes(&self.child_nodes, &self.filter_text);
+        self.child_tree_nodes = render_tree_nodes(&self.child_file_nodes, &self.filter_text);
         self.reset_cursor_offset();
         self.move_cursor(0); // validate cursor position
     }
@@ -133,44 +133,38 @@ impl App {
     }
 
     pub fn get_current_string_path(&self) -> String {
-        get_string_abs_path(&self.parent_nodes)
+        get_string_abs_path(&self.parent_file_nodes)
     }
 
     pub fn populate_current_child_nodes(&mut self) {
         let path = self.get_current_string_path();
-
         let nodes_result = list_files(std::path::Path::new(&path));
         if nodes_result.is_err() {
             self.error_message = Some(contextualized_error(&nodes_result.unwrap_err()));
-            self.child_nodes = vec![];
+            self.child_file_nodes = vec![];
             self.render_tree_nodes();
             return;
         }
         let mut nodes = nodes_result.unwrap();
         nodes.sort_by(|a, b| {
-            if a.file_type == crate::filesystem::FileType::Directory
-                && b.file_type != crate::filesystem::FileType::Directory
-            {
+            if a.file_type == FileType::Directory && b.file_type != FileType::Directory {
                 std::cmp::Ordering::Less
-            } else if a.file_type != crate::filesystem::FileType::Directory
-                && b.file_type == crate::filesystem::FileType::Directory
-            {
+            } else if a.file_type != FileType::Directory && b.file_type == FileType::Directory {
                 std::cmp::Ordering::Greater
             } else {
                 a.lowercase_name.cmp(&b.lowercase_name)
             }
         });
-
-        self.child_nodes = nodes;
+        self.child_file_nodes = nodes;
         self.render_tree_nodes();
     }
 
     pub fn go_up(&mut self) {
-        if self.parent_nodes.is_empty() {
+        if self.parent_file_nodes.is_empty() {
             return;
         }
         self.filter_text.clear();
-        let parent: FileNode = self.parent_nodes.pop().unwrap();
+        let parent: FileNode = self.parent_file_nodes.pop().unwrap();
         self.populate_current_child_nodes();
         let new_cursor = self
             .child_tree_nodes
@@ -188,31 +182,18 @@ impl App {
         self.set_dir_cursor(self.dir_cursor);
     }
 
-    pub fn get_selected_tree_node(&self) -> Option<&TreeNode> {
-        if self.child_tree_nodes.is_empty() || self.dir_cursor >= self.child_tree_nodes.len() {
-            return None;
-        }
-        let selected_node = &self.child_tree_nodes[self.dir_cursor];
-        Some(selected_node)
-    }
-
     pub fn go_into(&mut self) {
-        if self.child_tree_nodes.is_empty() {
-            return;
-        }
-        let selected_node_o: Option<&TreeNode> = self.get_selected_tree_node();
+        let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
         if selected_node_o.is_none() {
             return;
         }
-        let selected_node: &TreeNode = selected_node_o.unwrap();
-
-        match &selected_node.kind {
+        match selected_node_o.unwrap().kind {
             TreeNodeType::SelfReference => return,
             TreeNodeType::FileNode(file_node) => {
-                if file_node.file_type != crate::filesystem::FileType::Directory {
+                if file_node.file_type != FileType::Directory {
                     return;
                 }
-                self.parent_nodes.push(file_node.clone());
+                self.parent_file_nodes.push(file_node.clone());
                 self.filter_text.clear();
                 self.populate_current_child_nodes();
                 self.reset_cursor_offset();
@@ -222,71 +203,53 @@ impl App {
     }
 
     pub fn go_to_root(&mut self) {
-        self.parent_nodes = vec![];
+        self.parent_file_nodes = vec![];
         self.filter_text.clear();
         self.populate_current_child_nodes();
         self.reset_cursor_offset();
         self.set_dir_cursor(0);
     }
 
-    pub fn pick_selected_node(&mut self) {
-        if self.child_tree_nodes.is_empty() {
-            return;
-        }
-        let selected_node_o: Option<&TreeNode> = self.get_selected_tree_node();
-        if selected_node_o.is_none() {
-            return;
-        }
-        let selected_node: &TreeNode = selected_node_o.unwrap();
-
-        match &selected_node.kind {
-            TreeNodeType::SelfReference => {
-                self.pick_current_dir();
-                return;
-            }
-            TreeNodeType::FileNode(file_node) => {
-                let mut chosen_nodes: Vec<FileNode> = self.parent_nodes.clone();
-                chosen_nodes.push(file_node.clone());
-                let chosen_path: String = get_string_abs_path(&chosen_nodes);
-
-                self.picked_path = match self.determine_relative_mode(&chosen_nodes) {
-                    true => self.make_relative_path(&chosen_path),
-                    false => Some(chosen_path),
-                };
-                if !self.picked_path.is_none() {
-                    self.quit();
-                }
-            }
-        }
-    }
-
     pub fn enter_selected_node(&mut self) {
-        if self.child_tree_nodes.is_empty() {
-            return;
-        }
-        let selected_node_o: Option<&TreeNode> = self.get_selected_tree_node();
+        let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
         if selected_node_o.is_none() {
             return;
         }
-        let selected_node: &TreeNode = selected_node_o.unwrap();
-        match &selected_node.kind {
+        match selected_node_o.unwrap().kind {
             TreeNodeType::SelfReference => {
                 self.pick_current_dir();
-                return;
             }
-            TreeNodeType::FileNode(file_node) => {
-                if file_node.file_type == crate::filesystem::FileType::Directory {
-                    self.go_into();
-                } else {
-                    self.pick_selected_node();
-                }
-            }
+            TreeNodeType::FileNode(file_node) => match file_node.file_type {
+                FileType::Directory => self.go_into(),
+                _ => self.pick_selected_node(None),
+            },
         }
     }
 
     pub fn pick_current_dir(&mut self) {
-        let chosen_path: String = get_string_abs_path(&self.parent_nodes);
-        self.picked_path = match self.determine_relative_mode(&self.parent_nodes) {
+        let current_dir_node = TreeNode {
+            relevance: 0,
+            kind: TreeNodeType::SelfReference,
+        };
+        self.pick_tree_node(&current_dir_node, None);
+    }
+
+    pub fn pick_selected_node(&mut self, relative_mode: Option<bool>) {
+        let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
+        if selected_node_o.is_none() {
+            return;
+        }
+        let selected_node: TreeNode = selected_node_o.unwrap();
+        self.pick_tree_node(&selected_node, relative_mode);
+    }
+
+    pub fn pick_tree_node(&mut self, tree_node: &TreeNode, relative_mode_o: Option<bool>) {
+        let (chosen_path, chosen_nodes) = self.build_tree_node_path(tree_node);
+        let relative_mode: bool = match relative_mode_o {
+            Some(b) => b,
+            None => self.determine_relative_mode(&chosen_nodes),
+        };
+        self.picked_path = match relative_mode {
             true => self.make_relative_path(&chosen_path),
             false => Some(chosen_path),
         };
@@ -295,32 +258,47 @@ impl App {
         }
     }
 
-    pub fn get_selected_abs_path(&mut self) -> Option<String> {
-        if self.child_tree_nodes.is_empty() {
+    pub fn get_selected_tree_node(&self) -> Option<TreeNode> {
+        if self.child_tree_nodes.is_empty() || self.dir_cursor >= self.child_tree_nodes.len() {
             return None;
         }
-        let selected_node_o: Option<&TreeNode> = self.get_selected_tree_node();
+        let selected_node = &self.child_tree_nodes[self.dir_cursor];
+        Some(selected_node.clone())
+    }
+
+    pub fn build_tree_node_path(&self, tree_node: &TreeNode) -> (String, Vec<FileNode>) {
+        match &tree_node.kind {
+            TreeNodeType::SelfReference => {
+                return (
+                    get_string_abs_path(&self.parent_file_nodes),
+                    self.parent_file_nodes.clone(),
+                );
+            }
+            TreeNodeType::FileNode(file_node) => {
+                let mut chosen_nodes: Vec<FileNode> = self.parent_file_nodes.clone();
+                chosen_nodes.push(file_node.clone());
+                return (get_string_abs_path(&chosen_nodes), chosen_nodes);
+            }
+        }
+    }
+
+    pub fn get_selected_abs_path(&mut self) -> Option<String> {
+        let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
         if selected_node_o.is_none() {
             return None;
         }
-        let selected_node: &TreeNode = selected_node_o.unwrap();
-        match &selected_node.kind {
-            TreeNodeType::SelfReference => {
-                return Some(get_string_abs_path(&self.parent_nodes));
-            }
-            TreeNodeType::FileNode(file_node) => {
-                let mut chosen_nodes: Vec<FileNode> = self.parent_nodes.clone();
-                chosen_nodes.push(file_node.clone());
-                return Some(get_string_abs_path(&chosen_nodes));
-            }
-        }
+        let (chosen_path, _) = self.build_tree_node_path(&selected_node_o.unwrap());
+        return Some(chosen_path);
     }
 
     pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {
         if self.absolute_path {
             return false;
         }
-        self.relative_path || nodes_start_with(&chosen_nodes, &self.starting_dir_nodes)
+        if self.relative_path {
+            return true;
+        }
+        nodes_start_with(chosen_nodes, &self.starting_dir_nodes)
     }
 
     pub fn make_relative_path(&mut self, chosen_path: &String) -> Option<String> {
@@ -384,19 +362,28 @@ impl App {
         self.window_focus = WindowFocus::Tree;
     }
 
-    pub fn call_dialog_action(&mut self, _: &mut Tui) {
+    pub fn execute_dialog_action(&mut self, _: &mut Tui) {
         let path = self.get_selected_abs_path();
         if path.is_none() {
             return;
         }
 
         let action: &MenuAction = &self.known_menu_actions[self.action_cursor];
-        let res = run_menu_action(&path.unwrap(), action);
-        if res.is_err() {
-            self.error_message = Some(res.err().unwrap().to_string());
-            return;
-        }
 
-        self.window_focus = WindowFocus::Tree;
+        match action.operation {
+            Operation::ShellCommand { template } => {
+                let res = execute_shell_operation(&path.unwrap(), template);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
+                self.window_focus = WindowFocus::Tree;
+            }
+            Operation::PickAbsolutePath => {
+                self.pick_selected_node(Some(false));
+            }
+            Operation::PickRelativePath => {
+                self.pick_selected_node(Some(true));
+            }
+        }
     }
 }
