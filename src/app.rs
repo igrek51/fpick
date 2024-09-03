@@ -4,7 +4,7 @@ use signal_hook::{consts::SIGINT, consts::SIGTERM, iterator::Signals};
 use std::sync::mpsc;
 use std::thread;
 
-use crate::action_menu::{generate_known_actions, MenuAction};
+use crate::action_menu::{generate_known_actions, MenuAction, Operation};
 use crate::appdata::WindowFocus;
 use crate::filesystem::FileNode;
 use crate::logs::print_logs;
@@ -31,6 +31,9 @@ pub struct App {
     pub window_focus: WindowFocus,
     pub action_cursor: usize,
     pub known_menu_actions: Vec<MenuAction>,
+    pub action_menu_operation: Option<Operation>,
+    pub action_menu_title: String,
+    pub action_menu_buffer: String,
 }
 
 impl App {

@@ -5,7 +5,7 @@ use std::fs;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 
-use crate::action_menu::{execute_shell_operation, MenuAction, Operation};
+use crate::action_menu::{execute_shell_operation, rename_file, MenuAction, Operation};
 use crate::app::App;
 use crate::appdata::WindowFocus;
 use crate::errors::contextualized_error;
@@ -129,6 +129,7 @@ impl App {
                     .clamp_min(0) as usize;
                 self.action_cursor = new_cursor;
             }
+            _ => {}
         }
     }
 
@@ -384,6 +385,30 @@ impl App {
             Operation::PickRelativePath => {
                 self.pick_selected_node(Some(true));
             }
+            Operation::Rename => {
+                let filename = path.unwrap().split('/').last().unwrap().to_string();
+                self.window_focus = WindowFocus::ActionMenuStep2;
+                self.action_menu_operation = Some(Operation::Rename);
+                self.action_menu_title = "New name".to_string();
+                self.action_menu_buffer = filename;
+            }
+        }
+    }
+    pub fn execute_dialog_action_step2(&mut self, _: &mut Tui) {
+        let path = self.get_selected_abs_path();
+        if path.is_none() {
+            return;
+        }
+
+        match self.action_menu_operation {
+            Some(Operation::Rename) => {
+                let res = rename_file(&path.unwrap(), &self.action_menu_buffer);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
+                self.window_focus = WindowFocus::Tree;
+            }
+            _ => {}
         }
     }
 }

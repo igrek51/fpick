@@ -24,6 +24,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     render_filter_panel(app, frame, layout[1]);
     if app.window_focus == WindowFocus::ActionMenu {
         render_action_popup(app, frame);
+    } else if app.window_focus == WindowFocus::ActionMenuStep2 {
+        render_action_popup_step2(app, frame);
     }
     if app.error_message.is_some() {
         render_error_popup(app, frame);
@@ -111,6 +113,28 @@ fn render_action_popup(app: &mut App, frame: &mut Frame) {
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
     frame.render_stateful_widget(widget, area, &mut list_state);
+}
+
+fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
+    let p_text = format!("{}\u{2588}", app.action_menu_buffer);
+    let title = Block::default()
+        .title(app.action_menu_title.as_str())
+        .title_style(Style::new().bold())
+        .title_alignment(Alignment::Left)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .bg(Color::DarkGray);
+    let widget = Paragraph::new(p_text)
+        .block(title)
+        .style(Style::default().fg(Color::White))
+        .alignment(Alignment::Left);
+
+    let width = frame.size().width / 2;
+    let height = 3;
+    let area = centered_rect(width, height, frame.size());
+    let buffer = frame.buffer_mut();
+    Clear.render(area, buffer);
+    frame.render_widget(widget, area);
 }
 
 fn render_error_popup(app: &mut App, frame: &mut Frame) {

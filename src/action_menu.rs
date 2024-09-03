@@ -14,6 +14,7 @@ pub enum Operation {
     ShellCommand { template: &'static str },
     PickAbsolutePath,
     PickRelativePath,
+    Rename,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -61,6 +62,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
+            name: "Rename",
+            operation: Operation::Rename,
+        },
+        MenuAction {
             name: "Pick absolute path",
             operation: Operation::PickAbsolutePath,
         },
@@ -73,6 +78,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
 
 pub fn execute_shell_operation(path: &String, command_template: &str) -> Result<()> {
     let cmd = String::from(command_template).replace("{}", path);
+    execute_shell(cmd.clone())
+}
+
+pub fn execute_shell(cmd: String) -> Result<()> {
     log(format!("Executing command: {:?}", cmd).as_str());
     let c = Command::new("sh")
         .arg("-c")
@@ -97,6 +106,12 @@ pub fn execute_shell_operation(path: &String, command_template: &str) -> Result<
         log(error.as_str());
         return Err(anyhow!(error));
     }
-
     Ok(())
+}
+
+pub fn rename_file(abs_path: &String, new_name: &String) -> Result<()> {
+    let path_parts = abs_path.split('/').collect::<Vec<&str>>();
+    let folder_abs_path: String = path_parts[..path_parts.len() - 1].join("/");
+    let cmd = format!("mv \"{}\" \"{}/{}\"", abs_path, folder_abs_path, new_name);
+    execute_shell(cmd)
 }

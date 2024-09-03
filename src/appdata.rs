@@ -2,6 +2,7 @@
 pub enum WindowFocus {
     Tree,
     ActionMenu,
+    ActionMenuStep2,
 }
 
 impl Default for WindowFocus {

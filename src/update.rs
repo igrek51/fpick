@@ -6,6 +6,7 @@ pub fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match app.window_focus {
         WindowFocus::Tree => on_key_tree(app, key_event),
         WindowFocus::ActionMenu => on_key_action_menu(app, key_event, tui),
+        WindowFocus::ActionMenuStep2 => on_key_action_menu_step2(app, key_event, tui),
     }
 }
 
@@ -39,7 +40,7 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
             app.backspace_search_text();
         }
         KeyCode::Char(c) => app.type_search_text(c),
-        _ => log(format!("Key event: {:?}", key_event).as_str()),
+        _ => log(format!("Unknown key event: {:?}", key_event).as_str()),
     };
 }
 
@@ -55,7 +56,34 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
         KeyCode::Up => app.move_cursor(-1),
         KeyCode::Enter => app.execute_dialog_action(tui),
         _ => {
-            log(format!("Key event: {:?}", key_event).as_str());
+            log(format!("Unknown key event: {:?}", key_event).as_str());
+        }
+    };
+}
+
+pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
+    match key_event.code {
+        KeyCode::Enter if app.has_error() => app.clear_error(),
+        KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Esc => app.close_action_dialog(),
+        KeyCode::Char('c') | KeyCode::Char('C') if key_event.modifiers == KeyModifiers::CONTROL => {
+            app.quit();
+        }
+        KeyCode::Enter => app.execute_dialog_action_step2(tui),
+        KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
+            app.action_menu_buffer.clear();
+        }
+        KeyCode::Backspace => {
+            app.action_menu_buffer.pop();
+        }
+        KeyCode::Char('w') if key_event.modifiers == KeyModifiers::CONTROL => {
+            app.action_menu_buffer.pop();
+        }
+        KeyCode::Char(c) => {
+            app.action_menu_buffer.push(c);
+        }
+        _ => {
+            log(format!("Unknown key event: {:?}", key_event).as_str());
         }
     };
 }
