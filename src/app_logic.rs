@@ -393,6 +393,7 @@ impl App {
                 self.action_menu_buffer = filename;
             }
         }
+        self.populate_current_child_nodes();
     }
     pub fn execute_dialog_action_step2(&mut self, _: &mut Tui) {
         let path = self.get_selected_abs_path();
@@ -410,5 +411,6 @@ impl App {
             }
             _ => {}
         }
+        self.populate_current_child_nodes();
     }
 }
