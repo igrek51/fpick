@@ -243,7 +243,8 @@ impl App {
     }
 
     pub fn pick_tree_node(&mut self, tree_node: &TreeNode, relative_mode_o: Option<bool>) {
-        let (chosen_path, chosen_nodes) = self.build_tree_node_path(tree_node);
+        let chosen_path = self.build_tree_node_path(tree_node);
+        let chosen_nodes = self.build_tree_nodes_route(tree_node);
         let relative_mode: bool = match relative_mode_o {
             Some(b) => b,
             None => self.determine_relative_mode(&chosen_nodes),
@@ -265,29 +266,43 @@ impl App {
         Some(selected_node.clone())
     }
 
-    pub fn build_tree_node_path(&self, tree_node: &TreeNode) -> (String, Vec<FileNode>) {
+    pub fn build_tree_node_path(&self, tree_node: &TreeNode) -> String {
         match &tree_node.kind {
-            TreeNodeType::SelfReference => {
-                return (
-                    get_string_abs_path(&self.parent_file_nodes),
-                    self.parent_file_nodes.clone(),
-                );
-            }
+            TreeNodeType::SelfReference => get_string_abs_path(&self.parent_file_nodes),
             TreeNodeType::FileNode(file_node) => {
                 let mut chosen_nodes: Vec<FileNode> = self.parent_file_nodes.clone();
                 chosen_nodes.push(file_node.clone());
-                return (get_string_abs_path(&chosen_nodes), chosen_nodes);
+                get_string_abs_path(&chosen_nodes)
             }
         }
     }
 
-    pub fn get_selected_abs_path(&mut self) -> Option<String> {
+    pub fn build_tree_nodes_route(&self, tree_node: &TreeNode) -> Vec<FileNode> {
+        match &tree_node.kind {
+            TreeNodeType::SelfReference => self.parent_file_nodes.clone(),
+            TreeNodeType::FileNode(file_node) => {
+                let mut chosen_nodes: Vec<FileNode> = self.parent_file_nodes.clone();
+                chosen_nodes.push(file_node.clone());
+                chosen_nodes
+            }
+        }
+    }
+
+    pub fn get_selected_abs_path(&self) -> Option<String> {
         let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
         if selected_node_o.is_none() {
             return None;
         }
-        let (chosen_path, _) = self.build_tree_node_path(&selected_node_o.unwrap());
-        return Some(chosen_path);
+        let chosen_path = self.build_tree_node_path(&selected_node_o.unwrap());
+        Some(chosen_path)
+    }
+
+    pub fn get_current_dir_abs_path(&self) -> String {
+        let current_dir_node = TreeNode {
+            relevance: 0,
+            kind: TreeNodeType::SelfReference,
+        };
+        self.build_tree_node_path(&current_dir_node)
     }
 
     pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {

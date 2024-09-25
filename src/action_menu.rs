@@ -15,6 +15,8 @@ pub enum Operation {
     PickAbsolutePath,
     PickRelativePath,
     Rename,
+    CreateFile,
+    CreateDir,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -66,6 +68,14 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             operation: Operation::Rename,
         },
         MenuAction {
+            name: "Create file",
+            operation: Operation::CreateFile,
+        },
+        MenuAction {
+            name: "Create directory",
+            operation: Operation::CreateDir,
+        },
+        MenuAction {
             name: "Pick absolute path",
             operation: Operation::PickAbsolutePath,
         },
@@ -113,5 +123,15 @@ pub fn rename_file(abs_path: &String, new_name: &String) -> Result<()> {
     let path_parts = abs_path.split('/').collect::<Vec<&str>>();
     let folder_abs_path: String = path_parts[..path_parts.len() - 1].join("/");
     let cmd = format!("mv \"{}\" \"{}/{}\"", abs_path, folder_abs_path, new_name);
+    execute_shell(cmd)
+}
+
+pub fn create_file(abs_path: &String) -> Result<()> {
+    let cmd = format!("touch \"{}\"", abs_path);
+    execute_shell(cmd)
+}
+
+pub fn create_directory(abs_path: &String) -> Result<()> {
+    let cmd = format!("mkdir -p \"{}\"", abs_path);
     execute_shell(cmd)
 }

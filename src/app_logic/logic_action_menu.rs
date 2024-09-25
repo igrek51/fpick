@@ -1,4 +1,6 @@
-use crate::action_menu::{execute_shell_operation, rename_file, MenuAction, Operation};
+use crate::action_menu::{
+    create_directory, create_file, execute_shell_operation, rename_file, MenuAction, Operation,
+};
 use crate::app::App;
 use crate::appdata::WindowFocus;
 use crate::tui::Tui;
@@ -41,9 +43,25 @@ impl App {
             Operation::Rename => {
                 let filename = path.unwrap().split('/').last().unwrap().to_string();
                 self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(Operation::Rename);
+                self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New name for {}", filename);
                 self.action_menu_buffer = filename;
+                self.action_menu_cursor_x = self.action_menu_buffer.len();
+            }
+            Operation::CreateFile => {
+                let current_dir_path: String = self.get_current_dir_abs_path();
+                self.window_focus = WindowFocus::ActionMenuStep2;
+                self.action_menu_operation = Some(action.operation.clone());
+                self.action_menu_title = format!("New file at {}", current_dir_path);
+                self.action_menu_buffer = "".to_string();
+                self.action_menu_cursor_x = self.action_menu_buffer.len();
+            }
+            Operation::CreateDir => {
+                let current_dir_path: String = self.get_current_dir_abs_path();
+                self.window_focus = WindowFocus::ActionMenuStep2;
+                self.action_menu_operation = Some(action.operation.clone());
+                self.action_menu_title = format!("New directory at {}", current_dir_path);
+                self.action_menu_buffer = "".to_string();
                 self.action_menu_cursor_x = self.action_menu_buffer.len();
             }
         }
@@ -55,6 +73,10 @@ impl App {
         if path.is_none() {
             return;
         }
+        if self.action_menu_buffer.is_empty() {
+            self.error_message = Some("No value given".to_string());
+            return;
+        }
 
         match self.action_menu_operation {
             Some(Operation::Rename) => {
@@ -64,9 +86,36 @@ impl App {
                 }
                 self.window_focus = WindowFocus::Tree;
             }
+            Some(Operation::CreateFile) => {
+                let mut current_dir_path: String = self.get_current_dir_abs_path();
+                current_dir_path.push('/');
+                current_dir_path.push_str(&self.action_menu_buffer);
+                let res = create_file(&current_dir_path);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
+                self.window_focus = WindowFocus::Tree;
+            }
+            Some(Operation::CreateDir) => {
+                let mut current_dir_path: String = self.get_current_dir_abs_path();
+                current_dir_path.push('/');
+                current_dir_path.push_str(&self.action_menu_buffer);
+                let res = create_directory(&current_dir_path);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
+                self.window_focus = WindowFocus::Tree;
+            }
             _ => {}
         }
         self.populate_current_child_nodes();
+    }
+
+    pub fn action_menu_input_append(&mut self, c: char) {
+        let before = self.action_menu_buffer[..self.action_menu_cursor_x].to_string();
+        let after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
+        self.action_menu_buffer = before + &c.to_string() + &after;
+        self.action_menu_input_right();
     }
 
     pub fn action_menu_input_clear_backwards(&mut self) {
@@ -92,12 +141,6 @@ impl App {
             after.remove(0);
             self.action_menu_buffer = before + &after;
         }
-    }
-
-    pub fn action_menu_input_append(&mut self, c: char) {
-        let before = self.action_menu_buffer[..self.action_menu_cursor_x].to_string();
-        let after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
-        self.action_menu_buffer = before + &c.to_string() + &after;
     }
 
     pub fn action_menu_input_left(&mut self) {
