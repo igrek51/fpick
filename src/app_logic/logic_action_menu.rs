@@ -1,5 +1,6 @@
 use crate::action_menu::{
-    create_directory, create_file, execute_shell_operation, rename_file, MenuAction, Operation,
+    create_directory, create_file, delete_tree_node, execute_shell_operation, rename_file,
+    MenuAction, Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -63,6 +64,16 @@ impl App {
                 self.action_menu_title = format!("New directory at {}", current_dir_path);
                 self.action_menu_buffer = "".to_string();
                 self.action_menu_cursor_x = self.action_menu_buffer.len();
+            }
+            Operation::Delete => {
+                let tree_node = self.get_selected_tree_node();
+                if tree_node.is_some() {
+                    let res = delete_tree_node(&tree_node.unwrap(), &path.unwrap());
+                    if res.is_err() {
+                        self.error_message = Some(res.err().unwrap().to_string());
+                    }
+                }
+                self.window_focus = WindowFocus::Tree;
             }
         }
         self.populate_current_child_nodes();

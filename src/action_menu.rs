@@ -1,7 +1,11 @@
 use anyhow::{anyhow, Context, Result};
 use std::process::{Command, Stdio};
 
-use crate::logs::log;
+use crate::{
+    filesystem::FileType,
+    logs::log,
+    tree::{TreeNode, TreeNodeType},
+};
 
 #[derive(Debug, Clone)]
 pub struct MenuAction {
@@ -17,6 +21,7 @@ pub enum Operation {
     Rename,
     CreateFile,
     CreateDir,
+    Delete,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -46,16 +51,8 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Delete file",
-            operation: Operation::ShellCommand {
-                template: "rm \"{}\"",
-            },
-        },
-        MenuAction {
-            name: "Delete directory",
-            operation: Operation::ShellCommand {
-                template: "rm -rf \"{}\"",
-            },
+            name: "Delete",
+            operation: Operation::Delete,
         },
         MenuAction {
             name: "Copy filename to clipboard",
@@ -133,5 +130,22 @@ pub fn create_file(abs_path: &String) -> Result<()> {
 
 pub fn create_directory(abs_path: &String) -> Result<()> {
     let cmd = format!("mkdir -p \"{}\"", abs_path);
+    execute_shell(cmd)
+}
+
+pub fn delete_tree_node(tree_node: &TreeNode, abs_path: &String) -> Result<()> {
+    let cmd: String = match &tree_node.kind {
+        TreeNodeType::SelfReference => {
+            format!("rm -rf \"{}\"", abs_path)
+        }
+        TreeNodeType::FileNode(file_node) => match file_node.file_type {
+            FileType::Directory => {
+                format!("rm -rf \"{}\"", abs_path)
+            }
+            _ => {
+                format!("rm \"{}\"", abs_path)
+            }
+        },
+    };
     execute_shell(cmd)
 }

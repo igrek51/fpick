@@ -33,7 +33,16 @@ curl -L https://github.com/igrek51/fpick/releases/download/0.6.0/fpick -o ~/bin/
 chmod +x ~/bin/fpick
 ```
 
-## Usage & Controls
+## Usage
+### Traverse through directories
+Type `cd "$(fpick)"` to quickly change the directory interactively:
+
+- Start typing a name to filter the list of directories.
+- Find your subdirectory with up and down arrows. Hit `Enter` to go inside.
+- Repeat the steps until you are in the directory you are looking for.
+- Hit `Enter` again (when being focused on `.`) to exit and change the directory.
+
+## Controls
 Launch the interactive file picker by running `fpick`.
 
 Navigate with keyboard:
