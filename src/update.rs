@@ -71,17 +71,18 @@ pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tu
         }
         KeyCode::Enter => app.execute_dialog_action_step2(tui),
         KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
-            app.action_menu_buffer.clear();
+            app.action_menu_input_clear_backwards();
         }
-        KeyCode::Backspace => {
-            app.action_menu_buffer.pop();
-        }
+        KeyCode::Backspace => app.action_menu_input_backspace(),
+        KeyCode::Delete => app.action_menu_input_delete(),
         KeyCode::Char('w') if key_event.modifiers == KeyModifiers::CONTROL => {
-            app.action_menu_buffer.pop();
+            app.action_menu_input_backspace();
         }
-        KeyCode::Char(c) => {
-            app.action_menu_buffer.push(c);
-        }
+        KeyCode::Char(c) => app.action_menu_input_append(c),
+        KeyCode::Left => app.action_menu_input_left(),
+        KeyCode::Right => app.action_menu_input_right(),
+        KeyCode::Home => app.action_menu_input_home(),
+        KeyCode::End => app.action_menu_input_end(),
         _ => {
             log(format!("Unknown key event: {:?}", key_event).as_str());
         }

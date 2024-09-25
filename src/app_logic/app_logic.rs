@@ -5,7 +5,6 @@ use std::fs;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 
-use crate::action_menu::{execute_shell_operation, rename_file, MenuAction, Operation};
 use crate::app::App;
 use crate::appdata::WindowFocus;
 use crate::errors::contextualized_error;
@@ -15,7 +14,6 @@ use crate::filesystem::{
 };
 use crate::numbers::ClampNumExt;
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
-use crate::tui::Tui;
 
 const HELP_TEXT: &str = "fpick - interactive file picker. 
 Navigate with arrow keys and enter. It returns the selected path to standard output.
@@ -124,10 +122,10 @@ impl App {
                 self.set_dir_cursor(new_cursor);
             }
             WindowFocus::ActionMenu => {
-                let new_cursor = (self.action_cursor as i32 + delta)
+                let new_cursor = (self.action_menu_cursor_y as i32 + delta)
                     .clamp_max(self.known_menu_actions.len() as i32 - 1)
                     .clamp_min(0) as usize;
-                self.action_cursor = new_cursor;
+                self.action_menu_cursor_y = new_cursor;
             }
             _ => {}
         }
@@ -349,68 +347,5 @@ impl App {
 
     pub fn clear_error(&mut self) {
         self.error_message = None;
-    }
-
-    pub fn open_action_dialog(&mut self) {
-        if self.child_tree_nodes.is_empty() {
-            return;
-        }
-        self.window_focus = WindowFocus::ActionMenu;
-        self.action_cursor = 0;
-    }
-
-    pub fn close_action_dialog(&mut self) {
-        self.window_focus = WindowFocus::Tree;
-    }
-
-    pub fn execute_dialog_action(&mut self, _: &mut Tui) {
-        let path = self.get_selected_abs_path();
-        if path.is_none() {
-            return;
-        }
-
-        let action: &MenuAction = &self.known_menu_actions[self.action_cursor];
-
-        match action.operation {
-            Operation::ShellCommand { template } => {
-                let res = execute_shell_operation(&path.unwrap(), template);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
-                }
-                self.window_focus = WindowFocus::Tree;
-            }
-            Operation::PickAbsolutePath => {
-                self.pick_selected_node(Some(false));
-            }
-            Operation::PickRelativePath => {
-                self.pick_selected_node(Some(true));
-            }
-            Operation::Rename => {
-                let filename = path.unwrap().split('/').last().unwrap().to_string();
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(Operation::Rename);
-                self.action_menu_title = "New name".to_string();
-                self.action_menu_buffer = filename;
-            }
-        }
-        self.populate_current_child_nodes();
-    }
-    pub fn execute_dialog_action_step2(&mut self, _: &mut Tui) {
-        let path = self.get_selected_abs_path();
-        if path.is_none() {
-            return;
-        }
-
-        match self.action_menu_operation {
-            Some(Operation::Rename) => {
-                let res = rename_file(&path.unwrap(), &self.action_menu_buffer);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
-                }
-                self.window_focus = WindowFocus::Tree;
-            }
-            _ => {}
-        }
-        self.populate_current_child_nodes();
     }
 }

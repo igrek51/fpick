@@ -89,7 +89,7 @@ fn render_action_popup(app: &mut App, frame: &mut Frame) {
         .iter()
         .map(|it: &MenuAction| ListItem::new(it.name))
         .collect();
-    let mut list_state = ListState::default().with_selected(Some(app.action_cursor));
+    let mut list_state = ListState::default().with_selected(Some(app.action_menu_cursor_y));
     let widget = List::new(list_items)
         .block(
             Block::default()
@@ -116,7 +116,20 @@ fn render_action_popup(app: &mut App, frame: &mut Frame) {
 }
 
 fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
-    let p_text = format!("{}\u{2588}", app.action_menu_buffer);
+    let display_buffer = format!("{} ", app.action_menu_buffer);
+    let cx = app.action_menu_cursor_x;
+    let buffer_pre = display_buffer[..cx].to_string();
+    let highlighted = display_buffer[cx..cx + 1].to_string();
+    let buffer_post = display_buffer[cx + 1..].to_string();
+    let p_line = Line::from(vec![
+        Span::styled(buffer_pre, Style::default().fg(Color::White)),
+        Span::styled(
+            highlighted,
+            Style::default().fg(Color::Black).bg(Color::White),
+        ),
+        Span::styled(buffer_post, Style::default().fg(Color::White)),
+    ]);
+
     let title = Block::default()
         .title(app.action_menu_title.as_str())
         .title_style(Style::new().bold())
@@ -124,9 +137,8 @@ fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .bg(Color::DarkGray);
-    let widget = Paragraph::new(p_text)
+    let widget = Paragraph::new(p_line)
         .block(title)
-        .style(Style::default().fg(Color::White))
         .alignment(Alignment::Left);
 
     let width = frame.size().width / 2;
