@@ -1,7 +1,7 @@
+use std::time::{Duration, Instant};
 use std::{
     sync::{mpsc, Arc, Mutex},
     thread,
-    time::{Duration, Instant},
 };
 
 use anyhow::Result;
@@ -42,7 +42,7 @@ impl EventHandler {
 
     pub fn listen(self) -> Self {
         let sender = self.sender.clone();
-        let suspended_store = self.suspended_store.clone();
+        let suspended_store: Arc<Mutex<bool>> = self.suspended_store.clone();
         thread::spawn(move || {
             let mut last_tick = Instant::now();
             loop {
@@ -51,24 +51,28 @@ impl EventHandler {
                     .checked_sub(last_tick.elapsed())
                     .unwrap_or(self.tick_rate);
 
-                let suspended = *suspended_store.lock().unwrap();
-                if suspended {
+                if Self::is_suspended(&suspended_store) {
                     thread::sleep(Duration::from_millis(100));
-                } else {
-                    if event::poll(timeout).expect("unable to poll for event") {
-                        match event::read().expect("unable to read event") {
-                            CrosstermEvent::Key(e) => {
-                                let suspended = *suspended_store.lock().unwrap();
-                                if !suspended && e.kind == event::KeyEventKind::Press {
-                                    sender.send(Event::Key(e))
-                                } else {
-                                    Ok(()) // ignore KeyEventKind::Release on windows
+                    continue;
+                }
+
+                if event::poll(timeout).expect("unable to poll for event") {
+                    match event::read().expect("unable to read event") {
+                        CrosstermEvent::Key(e) => {
+                            if !Self::is_suspended(&suspended_store.clone()) {
+                                if e.kind == event::KeyEventKind::Press {
+                                    sender
+                                        .send(Event::Key(e))
+                                        .expect("failed to send key event");
                                 }
                             }
-                            CrosstermEvent::Resize(_, _) => sender.send(Event::Resize),
-                            _ => unimplemented!(),
                         }
-                        .expect("failed to send terminal event")
+                        CrosstermEvent::Resize(_, _) => {
+                            sender
+                                .send(Event::Resize)
+                                .expect("failed to send resize event");
+                        }
+                        _ => {}
                     }
                 }
 
@@ -90,6 +94,21 @@ impl EventHandler {
     }
 
     pub fn resume(&self) {
+        Self::clear_queued_events();
         *self.suspended_store.lock().unwrap() = false;
+    }
+
+    pub fn clear_queued_events() {
+        while Self::is_event_available() {
+            event::read().unwrap();
+        }
+    }
+
+    pub fn is_event_available() -> bool {
+        event::poll(Duration::from_millis(100)).unwrap()
+    }
+
+    pub fn is_suspended(suspended_store: &Arc<Mutex<bool>>) -> bool {
+        *suspended_store.clone().lock().unwrap()
     }
 }

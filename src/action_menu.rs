@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use std::process::{Command, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 
 use crate::{
     filesystem::FileType,
@@ -48,8 +48,8 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         },
         MenuAction {
             name: "Edit in sudo vim",
-            operation: Operation::ShellCommand {
-                template: "gnome-terminal -- sudo vim \"{}\"",
+            operation: Operation::InteractiveShellCommand {
+                template: "sudo vim \"{}\"",
             },
         },
         MenuAction {
@@ -105,10 +105,14 @@ pub fn execute_interactive_shell_operation(
         .stderr(Stdio::inherit())
         .spawn()
         .context("failed to start a command")?;
-    let vim_cmd_result = output.wait().expect("Run exits ok");
+    let cmd_result: ExitStatus = output.wait().context("command failed")?;
     tui.enter().context("failed to enter TUI mode again")?;
-    if !vim_cmd_result.success() {
-        let error = format!("Failed to execute command: vim");
+    if !cmd_result.success() {
+        let error = format!(
+            "Failed to execute command: {:?}, exit code: {}",
+            cmd,
+            cmd_result.code().unwrap_or(0),
+        );
         log(error.as_str());
         return Err(anyhow!(error));
     }
