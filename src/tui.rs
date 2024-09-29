@@ -8,7 +8,6 @@ pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBacken
 use crate::{
     app::App,
     event::{Event, EventHandler},
-    logs::log,
     ui,
     update::update,
 };
@@ -23,10 +22,10 @@ impl Tui {
     pub fn new() -> Self {
         let backend = CrosstermBackend::new(std::io::stderr());
         let terminal: CrosstermTerminal = Terminal::new(backend).unwrap();
-        let events: EventHandler = EventHandler::new(5000).listen();
+        let event_handler: EventHandler = EventHandler::new(3000).listen();
         Self {
             terminal,
-            event_handler: events,
+            event_handler,
         }
     }
 
