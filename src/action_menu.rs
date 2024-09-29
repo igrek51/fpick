@@ -5,6 +5,7 @@ use crate::{
     filesystem::FileType,
     logs::log,
     tree::{TreeNode, TreeNodeType},
+    tui::Tui,
 };
 
 #[derive(Debug, Clone)]
@@ -16,6 +17,7 @@ pub struct MenuAction {
 #[derive(Debug, Clone)]
 pub enum Operation {
     ShellCommand { template: &'static str },
+    InteractiveShellCommand { template: &'static str },
     PickAbsolutePath,
     PickRelativePath,
     Rename,
@@ -34,14 +36,14 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         },
         MenuAction {
             name: "Show in less",
-            operation: Operation::ShellCommand {
-                template: "gnome-terminal -- less \"{}\"",
+            operation: Operation::InteractiveShellCommand {
+                template: "less \"{}\"",
             },
         },
         MenuAction {
             name: "Edit in vim",
-            operation: Operation::ShellCommand {
-                template: "gnome-terminal -- vim \"{}\"",
+            operation: Operation::InteractiveShellCommand {
+                template: "vim \"{}\"",
             },
         },
         MenuAction {
@@ -86,6 +88,31 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
 pub fn execute_shell_operation(path: &String, command_template: &str) -> Result<()> {
     let cmd = String::from(command_template).replace("{}", path);
     execute_shell(cmd.clone())
+}
+
+pub fn execute_interactive_shell_operation(
+    path: &String,
+    command_template: &str,
+    tui: &mut Tui,
+) -> Result<()> {
+    let cmd = String::from(command_template).replace("{}", path);
+    tui.exit().context("failed to exit TUI mode")?;
+    let mut output = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(cmd.clone())
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .context("failed to start a command")?;
+    let vim_cmd_result = output.wait().expect("Run exits ok");
+    tui.enter().context("failed to enter TUI mode again")?;
+    if !vim_cmd_result.success() {
+        let error = format!("Failed to execute command: vim");
+        log(error.as_str());
+        return Err(anyhow!(error));
+    }
+    Ok(())
 }
 
 pub fn execute_shell(cmd: String) -> Result<()> {

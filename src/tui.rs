@@ -5,29 +5,39 @@ use std::{io, panic};
 
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
-use crate::{app::App, event::Event, event::EventHandler, ui, update::update};
+use crate::{
+    app::App,
+    event::{Event, EventHandler},
+    logs::log,
+    ui,
+    update::update,
+};
 
 #[derive(Debug)]
 pub struct Tui {
     terminal: CrosstermTerminal,
-    pub events: EventHandler,
+    pub event_handler: EventHandler,
 }
 
 impl Tui {
     pub fn new() -> Self {
         let backend = CrosstermBackend::new(std::io::stderr());
         let terminal: CrosstermTerminal = Terminal::new(backend).unwrap();
-        let events: EventHandler = EventHandler::new(5000);
-        Self { terminal, events }
+        let events: EventHandler = EventHandler::new(5000).listen();
+        Self {
+            terminal,
+            event_handler: events,
+        }
     }
 
     pub fn enter(&mut self) -> Result<()> {
         terminal::enable_raw_mode()?; // https://docs.rs/crossterm/latest/crossterm/terminal/index.html#raw-mode
         crossterm::execute!(io::stderr(), EnterAlternateScreen,)?;
+        self.event_handler.resume();
 
         let panic_hook = panic::take_hook();
         panic::set_hook(Box::new(move |panic| {
-            Self::reset().expect("failed to reset the terminal");
+            Self::fatal_exit().expect("failed to reset the terminal");
             panic_hook(panic);
         }));
 
@@ -43,7 +53,7 @@ impl Tui {
     }
 
     pub fn handle_events(&mut self, app: &mut App) -> Result<()> {
-        match self.events.next()? {
+        match self.event_handler.next()? {
             Event::Tick => app.tick(),
             Event::Key(key_event) => update(app, key_event, self),
             Event::Resize => {}
@@ -51,14 +61,16 @@ impl Tui {
         Ok(())
     }
 
-    fn reset() -> Result<()> {
+    fn fatal_exit() -> Result<()> {
         terminal::disable_raw_mode()?;
         crossterm::execute!(io::stderr(), LeaveAlternateScreen,)?;
         Ok(())
     }
 
     pub fn exit(&mut self) -> Result<()> {
-        Self::reset()?;
+        self.event_handler.suspend();
+        terminal::disable_raw_mode()?;
+        crossterm::execute!(io::stderr(), LeaveAlternateScreen,)?;
         Ok(())
     }
 }

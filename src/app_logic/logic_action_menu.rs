@@ -1,6 +1,6 @@
 use crate::action_menu::{
-    create_directory, create_file, delete_tree_node, execute_shell_operation, rename_file,
-    MenuAction, Operation,
+    create_directory, create_file, delete_tree_node, execute_interactive_shell_operation,
+    execute_shell_operation, rename_file, MenuAction, Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -19,7 +19,7 @@ impl App {
         self.window_focus = WindowFocus::Tree;
     }
 
-    pub fn execute_dialog_action(&mut self, _: &mut Tui) {
+    pub fn execute_dialog_action(&mut self, tui: &mut Tui) {
         let path = self.get_selected_abs_path();
         if path.is_none() {
             return;
@@ -30,6 +30,13 @@ impl App {
         match action.operation {
             Operation::ShellCommand { template } => {
                 let res = execute_shell_operation(&path.unwrap(), template);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
+                self.window_focus = WindowFocus::Tree;
+            }
+            Operation::InteractiveShellCommand { template } => {
+                let res = execute_interactive_shell_operation(&path.unwrap(), template, tui);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }

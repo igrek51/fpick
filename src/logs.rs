@@ -1,18 +1,32 @@
-use std::cell::RefCell;
+use std::borrow::BorrowMut;
+use std::sync::{Mutex, MutexGuard, Once};
 
-thread_local!(static LOGS: RefCell<Vec<String>> = RefCell::new(vec![]));
+static mut LOGS_MESSAGES: Option<Mutex<Vec<String>>> = None;
+static INIT_LOGS: Once = Once::new();
+
+fn global_logs_list<'a>() -> &'a Mutex<Vec<String>> {
+    INIT_LOGS.call_once(|| {
+        // Since this access is inside a call_once, before any other accesses, it is safe
+        unsafe {
+            *LOGS_MESSAGES.borrow_mut() = Some(Mutex::new(vec![]));
+        }
+    });
+    // As long as this function is the only place with access to the static variable,
+    // giving out a read-only borrow here is safe because it is guaranteed no more mutable
+    // references will exist at this point or in the future.
+    unsafe { LOGS_MESSAGES.as_ref().unwrap() }
+}
 
 pub fn log(msg: &str) {
-    LOGS.with(|logs| {
-        logs.borrow_mut().push(msg.to_string());
-    });
+    let mut guard: MutexGuard<'_, Vec<String>> = global_logs_list().lock().unwrap();
+    let vector: &mut Vec<String> = &mut *guard;
+    vector.push(msg.to_string());
 }
 
 pub fn print_logs() {
-    LOGS.with(|logs| {
-        let vector: Vec<String> = logs.borrow().clone();
-        for log in vector {
-            eprintln!("{}", log);
-        }
-    });
+    let guard: MutexGuard<'_, Vec<String>> = global_logs_list().lock().unwrap();
+    let vector: Vec<String> = guard.clone();
+    for log in vector {
+        eprintln!("{}", log);
+    }
 }
