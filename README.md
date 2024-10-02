@@ -63,7 +63,7 @@ Navigate with keyboard:
   - **Edit in sudo vim**
   - **Delete file**
   - **Delete directory**
-  - **Copy filename to clipboard**
+  - **Copy path to clipboard**
   - **Pick absolute path** - return absolute path to stdout.
   - **Pick relative path** - return relative path to stdout.
 

@@ -1,6 +1,7 @@
 use crate::action_menu::{
-    create_directory, create_file, delete_tree_node, execute_interactive_shell_operation,
-    execute_shell_operation, rename_file, MenuAction, Operation,
+    copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
+    execute_interactive_shell_operation, execute_shell_operation, rename_file, MenuAction,
+    Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -20,23 +21,25 @@ impl App {
     }
 
     pub fn execute_dialog_action(&mut self, tui: &mut Tui) {
-        let path = self.get_selected_abs_path();
-        if path.is_none() {
+        let abs_path = self.get_selected_abs_path();
+        if abs_path.is_none() {
             return;
         }
+        let abs_path: String = abs_path.unwrap();
+        let relative_path: Option<String> = self.make_relative_path(&abs_path);
 
         let action: &MenuAction = &self.known_menu_actions[self.action_menu_cursor_y];
-
         match action.operation {
             Operation::ShellCommand { template } => {
-                let res = execute_shell_operation(&path.unwrap(), template);
+                self.window_focus = WindowFocus::Tree;
+                self.error_message = Some("executing".to_string());
+                let res = execute_shell_operation(&abs_path, template);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }
-                self.window_focus = WindowFocus::Tree;
             }
             Operation::InteractiveShellCommand { template } => {
-                let res = execute_interactive_shell_operation(&path.unwrap(), template, tui);
+                let res = execute_interactive_shell_operation(&abs_path, template, tui);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }
@@ -49,7 +52,7 @@ impl App {
                 self.pick_selected_node(Some(true));
             }
             Operation::Rename => {
-                let filename = path.unwrap().split('/').last().unwrap().to_string();
+                let filename = abs_path.split('/').last().unwrap().to_string();
                 self.window_focus = WindowFocus::ActionMenuStep2;
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New name for {}", filename);
@@ -75,12 +78,22 @@ impl App {
             Operation::Delete => {
                 let tree_node = self.get_selected_tree_node();
                 if tree_node.is_some() {
-                    let res = delete_tree_node(&tree_node.unwrap(), &path.unwrap());
+                    let res = delete_tree_node(&tree_node.unwrap(), &abs_path);
                     if res.is_err() {
                         self.error_message = Some(res.err().unwrap().to_string());
                     }
                 }
                 self.window_focus = WindowFocus::Tree;
+            }
+            Operation::CopyToClipboard { is_relative_path } => {
+                self.window_focus = WindowFocus::Tree;
+                let res = match is_relative_path {
+                    true => copy_path_to_clipboard(&relative_path.unwrap()),
+                    false => copy_path_to_clipboard(&abs_path),
+                };
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                }
             }
         }
         self.populate_current_child_nodes();

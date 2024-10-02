@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use arboard::Clipboard;
 use std::process::{Command, ExitStatus, Stdio};
 
 use crate::{
@@ -24,6 +25,7 @@ pub enum Operation {
     CreateFile,
     CreateDir,
     Delete,
+    CopyToClipboard { is_relative_path: bool },
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -57,9 +59,15 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             operation: Operation::Delete,
         },
         MenuAction {
-            name: "Copy filename to clipboard",
-            operation: Operation::ShellCommand {
-                template: "echo -n \"{}\" | xclip -selection clipboard",
+            name: "Copy relative path to clipboard",
+            operation: Operation::CopyToClipboard {
+                is_relative_path: true,
+            },
+        },
+        MenuAction {
+            name: "Copy absolute path to clipboard",
+            operation: Operation::CopyToClipboard {
+                is_relative_path: false,
             },
         },
         MenuAction {
@@ -179,4 +187,12 @@ pub fn delete_tree_node(tree_node: &TreeNode, abs_path: &String) -> Result<()> {
         },
     };
     execute_shell(cmd)
+}
+
+pub fn copy_path_to_clipboard(path: &String) -> Result<()> {
+    let mut clipboard = Clipboard::new().context("failed to create clipboard")?;
+    clipboard
+        .set_text(path)
+        .context("failed to copy path to clipboard")?;
+    Ok(())
 }
