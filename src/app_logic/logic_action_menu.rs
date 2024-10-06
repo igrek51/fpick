@@ -2,11 +2,12 @@ use std::str::Chars;
 
 use crate::action_menu::{
     copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
-    execute_interactive_shell_operation, execute_shell_operation, rename_file, MenuAction,
-    Operation,
+    execute_interactive_shell_operation, execute_shell_operation, get_file_details, rename_file,
+    MenuAction, Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
+use crate::tree::TreeNode;
 use crate::tui::Tui;
 
 impl App {
@@ -23,12 +24,16 @@ impl App {
     }
 
     pub fn execute_dialog_action(&mut self, tui: &mut Tui) {
-        let abs_path = self.get_selected_abs_path();
-        if abs_path.is_none() {
-            return;
-        }
-        let abs_path: String = abs_path.unwrap();
+        let abs_path: String = match self.get_selected_abs_path() {
+            Some(abs_path) => abs_path,
+            None => return,
+        };
+        let tree_node: TreeNode = match self.get_selected_tree_node() {
+            Some(tree_node) => tree_node,
+            None => return,
+        };
         let relative_path: Option<String> = self.make_relative_path(&abs_path);
+        let is_directory = App::is_tree_node_directory(&tree_node);
 
         let action: &MenuAction = &self.known_menu_actions[self.action_menu_cursor_y];
         match action.operation {
@@ -78,12 +83,9 @@ impl App {
                 self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::Delete => {
-                let tree_node = self.get_selected_tree_node();
-                if tree_node.is_some() {
-                    let res = delete_tree_node(&tree_node.unwrap(), &abs_path);
-                    if res.is_err() {
-                        self.error_message = Some(res.err().unwrap().to_string());
-                    }
+                let res = delete_tree_node(&tree_node, &abs_path);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
                 }
                 self.window_focus = WindowFocus::Tree;
             }
@@ -95,6 +97,15 @@ impl App {
                 };
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
+                }
+            }
+            Operation::FileDetails => {
+                self.window_focus = WindowFocus::Tree;
+                let res = get_file_details(&abs_path, is_directory);
+                if res.is_err() {
+                    self.error_message = Some(res.err().unwrap().to_string());
+                } else {
+                    self.info_message = Some(res.unwrap());
                 }
             }
         }

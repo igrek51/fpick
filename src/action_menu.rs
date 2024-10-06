@@ -1,6 +1,10 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Ok, Result};
 use arboard::Clipboard;
-use std::process::{Command, ExitStatus, Stdio};
+use chrono::prelude::{DateTime, Utc};
+use std::{
+    fs,
+    process::{Command, ExitStatus, Stdio},
+};
 
 use crate::{
     filesystem::FileType,
@@ -26,6 +30,7 @@ pub enum Operation {
     CreateDir,
     Delete,
     CopyToClipboard { is_relative_path: bool },
+    FileDetails,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -89,6 +94,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "Pick relative path",
             operation: Operation::PickRelativePath,
+        },
+        MenuAction {
+            name: "Details",
+            operation: Operation::FileDetails,
         },
     ]
 }
@@ -195,4 +204,40 @@ pub fn copy_path_to_clipboard(path: &String) -> Result<()> {
         .set_text(path)
         .context("failed to copy path to clipboard")?;
     Ok(())
+}
+
+pub fn get_file_details(abs_path: &String, is_directory: bool) -> Result<String> {
+    let file_type = match is_directory {
+        true => "Directory",
+        false => "File",
+    };
+    let mut info_message = format!("{}: {}", file_type, abs_path);
+
+    let metadata = fs::metadata(abs_path).context("failed to read file metadata")?;
+    let size_bytes = metadata.len();
+    let file_size: String = human_readable_size(size_bytes);
+    info_message.push_str(format!("\nSize: {}", file_size).as_str());
+
+    let modified_time = metadata
+        .modified()
+        .context("failed to read modified time")?;
+    let dt: DateTime<Utc> = modified_time.into();
+    let modified_time_str = dt.format("%Y-%m-%d %H:%M:%S %z");
+    info_message.push_str(format!("\nModified: {}", modified_time_str).as_str());
+
+    Ok(info_message)
+}
+
+pub fn human_readable_size(size_bytes: u64) -> String {
+    if size_bytes < 1024 {
+        return format!("{} bytes", size_bytes);
+    }
+    let mut size = size_bytes as f64;
+    let units = ["B", "kB", "MB", "GB", "TB"];
+    let mut i = 0;
+    while size >= 1000.0 && i < units.len() - 1 {
+        size /= 1000.0;
+        i += 1;
+    }
+    format!("{:.2} {} ({} bytes)", size, units[i], size_bytes)
 }

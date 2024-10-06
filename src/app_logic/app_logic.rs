@@ -340,6 +340,16 @@ impl App {
         }
     }
 
+    pub fn is_tree_node_directory(tree_node: &TreeNode) -> bool {
+        match &tree_node.kind {
+            TreeNodeType::SelfReference => true,
+            TreeNodeType::FileNode(file_node) => match file_node.file_type {
+                FileType::Directory => true,
+                _ => false,
+            },
+        }
+    }
+
     pub fn type_search_text(&mut self, c: char) {
         self.filter_text.push(c);
         self.render_tree_nodes();
@@ -362,5 +372,13 @@ impl App {
 
     pub fn clear_error(&mut self) {
         self.error_message = None;
+    }
+
+    pub fn has_info(&self) -> bool {
+        self.info_message.is_some()
+    }
+
+    pub fn clear_info(&mut self) {
+        self.info_message = None;
     }
 }

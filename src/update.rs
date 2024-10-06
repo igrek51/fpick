@@ -12,8 +12,8 @@ pub fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
 
 pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
     match key_event.code {
-        KeyCode::Enter if app.has_error() => app.clear_error(),
-        KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
         KeyCode::Esc if !app.filter_text.is_empty() => app.clear_search_text(),
         KeyCode::Esc => app.quit(),
         KeyCode::Char('c') | KeyCode::Char('C') if key_event.modifiers == KeyModifiers::CONTROL => {
@@ -46,8 +46,8 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
 
 pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match key_event.code {
-        KeyCode::Enter if app.has_error() => app.clear_error(),
-        KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
         KeyCode::Esc => app.close_action_dialog(),
         KeyCode::Char('c') | KeyCode::Char('C') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.quit();
@@ -65,8 +65,8 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
 
 pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match key_event.code {
-        KeyCode::Enter if app.has_error() => app.clear_error(),
-        KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
+        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
         KeyCode::Esc => app.close_action_dialog(),
         KeyCode::Char('c') | KeyCode::Char('C') if key_event.modifiers == KeyModifiers::CONTROL => {
             app.quit();

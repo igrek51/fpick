@@ -29,6 +29,9 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     } else if app.window_focus == WindowFocus::ActionMenuStep2 {
         render_action_popup_step2(app, frame);
     }
+    if app.info_message.is_some() {
+        render_info_popup(app, frame);
+    }
     if app.error_message.is_some() {
         render_error_popup(app, frame);
     }
@@ -166,12 +169,10 @@ fn render_error_popup(app: &mut App, frame: &mut Frame) {
         .borders(Borders::ALL)
         .bg(Color::Red)
         .border_type(BorderType::Rounded);
-
     let error_window = Paragraph::new(error_message)
         .wrap(Wrap { trim: true })
         .block(title)
         .style(Style::default().fg(Color::White));
-
     let ok_label = Paragraph::new("OK")
         .style(Style::default().bold().fg(Color::LightRed).bg(Color::White))
         .alignment(Alignment::Center);
@@ -179,14 +180,53 @@ fn render_error_popup(app: &mut App, frame: &mut Frame) {
     let width: u16 = (frame.size().width as f32 * 0.75f32) as u16;
     let height: u16 = frame.size().height / 2;
     let area = centered_rect(width, height, frame.size());
-
     let ok_label_area = Rect {
         x: area.x + 1,
         y: area.y + area.height - 2,
         width: area.width - 2,
         height: 1,
     };
+    let buffer = frame.buffer_mut();
+    Clear.render(area, buffer);
+    frame.render_widget(error_window, area);
+    frame.render_widget(ok_label, ok_label_area);
+}
 
+fn render_info_popup(app: &mut App, frame: &mut Frame) {
+    if app.info_message.is_none() {
+        return;
+    }
+    let info_message: String = app.info_message.clone().unwrap();
+
+    let title = Block::default()
+        .title("Info")
+        .title_style(Style::new().bold())
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .bg(Color::Blue)
+        .border_type(BorderType::Rounded);
+    let error_window = Paragraph::new(info_message)
+        .wrap(Wrap { trim: true })
+        .block(title)
+        .style(Style::default().fg(Color::White));
+    let ok_label = Paragraph::new("OK")
+        .style(
+            Style::default()
+                .bold()
+                .fg(Color::LightBlue)
+                .bg(Color::White),
+        )
+        .alignment(Alignment::Center);
+
+    let width: u16 = (frame.size().width as f32 * 0.75f32) as u16;
+    let height: u16 = frame.size().height / 2;
+    let area = centered_rect(width, height, frame.size());
+    let ok_label_area = Rect {
+        x: area.x + 1,
+        y: area.y + area.height - 2,
+        width: area.width - 2,
+        height: 1,
+    };
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
     frame.render_widget(error_window, area);
