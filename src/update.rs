@@ -54,6 +54,8 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
         }
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
+        KeyCode::Home => app.move_cursor(-(app.known_menu_actions.len() as i32)),
+        KeyCode::End => app.move_cursor(app.known_menu_actions.len() as i32),
         KeyCode::Enter => app.execute_dialog_action(tui),
         _ => {
             log(format!("Unknown key event: {:?}", key_event).as_str());

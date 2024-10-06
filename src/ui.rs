@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 use crate::action_menu::MenuAction;
 use crate::appdata::WindowFocus;
 use crate::numbers::ClampNumExt;
@@ -117,10 +119,11 @@ fn render_action_popup(app: &mut App, frame: &mut Frame) {
 
 fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
     let display_buffer = format!("{} ", app.action_menu_buffer);
+    let chars: Chars<'_> = display_buffer.chars();
     let cx = app.action_menu_cursor_x;
-    let buffer_pre = display_buffer[..cx].to_string();
-    let highlighted = display_buffer[cx..cx + 1].to_string();
-    let buffer_post = display_buffer[cx + 1..].to_string();
+    let buffer_pre: String = chars.clone().take(cx).collect::<String>();
+    let highlighted: String = chars.clone().skip(cx).take(1).collect::<String>();
+    let buffer_post: String = chars.skip(cx + 1).collect::<String>();
     let p_line = Line::from(vec![
         Span::styled(buffer_pre, Style::default().fg(Color::White)),
         Span::styled(
@@ -138,11 +141,12 @@ fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
         .border_type(BorderType::Rounded)
         .bg(Color::DarkGray);
     let widget = Paragraph::new(p_line)
+        .wrap(Wrap { trim: true })
         .block(title)
         .alignment(Alignment::Left);
 
-    let width = frame.size().width / 2;
-    let height = 3;
+    let width = frame.size().width * 3 / 4;
+    let height = 4;
     let area = centered_rect(width, height, frame.size());
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);

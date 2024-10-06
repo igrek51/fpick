@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 use crate::action_menu::{
     copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
     execute_interactive_shell_operation, execute_shell_operation, rename_file, MenuAction,
@@ -57,7 +59,7 @@ impl App {
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New name for {}", filename);
                 self.action_menu_buffer = filename;
-                self.action_menu_cursor_x = self.action_menu_buffer.len();
+                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::CreateFile => {
                 let current_dir_path: String = self.get_current_dir_abs_path();
@@ -65,7 +67,7 @@ impl App {
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New file at {}", current_dir_path);
                 self.action_menu_buffer = "".to_string();
-                self.action_menu_cursor_x = self.action_menu_buffer.len();
+                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::CreateDir => {
                 let current_dir_path: String = self.get_current_dir_abs_path();
@@ -73,7 +75,7 @@ impl App {
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New directory at {}", current_dir_path);
                 self.action_menu_buffer = "".to_string();
-                self.action_menu_cursor_x = self.action_menu_buffer.len();
+                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::Delete => {
                 let tree_node = self.get_selected_tree_node();
@@ -143,21 +145,27 @@ impl App {
     }
 
     pub fn action_menu_input_append(&mut self, c: char) {
-        let before = self.action_menu_buffer[..self.action_menu_cursor_x].to_string();
-        let after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        let after: String = chars.skip(cx).collect::<String>();
         self.action_menu_buffer = before + &c.to_string() + &after;
         self.action_menu_input_right();
     }
 
     pub fn action_menu_input_clear_backwards(&mut self) {
-        let after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let after: String = chars.skip(cx).collect::<String>();
         self.action_menu_buffer = after;
         self.action_menu_cursor_x = 0;
     }
 
     pub fn action_menu_input_backspace(&mut self) {
-        let mut before = self.action_menu_buffer[..self.action_menu_cursor_x].to_string();
-        let after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let mut before: String = chars.clone().take(cx).collect::<String>();
+        let after: String = chars.skip(cx).collect::<String>();
         if !before.is_empty() {
             before.pop();
             self.action_menu_buffer = before + &after;
@@ -166,8 +174,10 @@ impl App {
     }
 
     pub fn action_menu_input_delete(&mut self) {
-        let before = self.action_menu_buffer[..self.action_menu_cursor_x].to_string();
-        let mut after = self.action_menu_buffer[self.action_menu_cursor_x..].to_string();
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        let mut after: String = chars.skip(cx).collect::<String>();
         if !after.is_empty() {
             after.remove(0);
             self.action_menu_buffer = before + &after;
@@ -182,8 +192,9 @@ impl App {
 
     pub fn action_menu_input_right(&mut self) {
         self.action_menu_cursor_x += 1;
-        if self.action_menu_cursor_x > self.action_menu_buffer.len() {
-            self.action_menu_cursor_x = self.action_menu_buffer.len();
+        let length = self.action_menu_buffer.chars().count();
+        if self.action_menu_cursor_x > length {
+            self.action_menu_cursor_x = length;
         }
     }
 
@@ -192,6 +203,6 @@ impl App {
     }
 
     pub fn action_menu_input_end(&mut self) {
-        self.action_menu_cursor_x = self.action_menu_buffer.len();
+        self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
     }
 }
