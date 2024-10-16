@@ -3,7 +3,7 @@ use std::str::Chars;
 use crate::action_menu::{
     copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
     execute_interactive_shell_operation, execute_shell_operation, get_file_details, rename_file,
-    MenuAction, Operation,
+    run_custom_command, MenuAction, Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -34,12 +34,12 @@ impl App {
         };
         let relative_path: Option<String> = self.make_relative_path(&abs_path);
         let is_directory = App::is_tree_node_directory(&tree_node);
+        let current_dir_path: String = self.get_current_dir_abs_path();
 
         let action: &MenuAction = &self.known_menu_actions[self.action_menu_cursor_y];
         match action.operation {
             Operation::ShellCommand { template } => {
                 self.window_focus = WindowFocus::Tree;
-                self.error_message = Some("executing".to_string());
                 let res = execute_shell_operation(&abs_path, template);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
@@ -67,7 +67,6 @@ impl App {
                 self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::CreateFile => {
-                let current_dir_path: String = self.get_current_dir_abs_path();
                 self.window_focus = WindowFocus::ActionMenuStep2;
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New file at {}", current_dir_path);
@@ -75,7 +74,6 @@ impl App {
                 self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
             Operation::CreateDir => {
-                let current_dir_path: String = self.get_current_dir_abs_path();
                 self.window_focus = WindowFocus::ActionMenuStep2;
                 self.action_menu_operation = Some(action.operation.clone());
                 self.action_menu_title = format!("New directory at {}", current_dir_path);
@@ -108,50 +106,59 @@ impl App {
                     self.info_message = Some(res.unwrap());
                 }
             }
+            Operation::CustomCommand => {
+                self.window_focus = WindowFocus::ActionMenuStep2;
+                self.action_menu_operation = Some(action.operation.clone());
+                self.action_menu_title = format!("Run command at {}", current_dir_path);
+                self.action_menu_buffer = format!("\"{}\"", abs_path);
+                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+            }
         }
         self.populate_current_child_nodes();
     }
 
     pub fn execute_dialog_action_step2(&mut self, _: &mut Tui) {
-        let path = self.get_selected_abs_path();
-        if path.is_none() {
-            return;
-        }
+        let abs_path: String = match self.get_selected_abs_path() {
+            Some(abs_path) => abs_path,
+            None => return,
+        };
         if self.action_menu_buffer.is_empty() {
             self.error_message = Some("No value given".to_string());
             return;
         }
+        let current_dir_path: String = self.get_current_dir_abs_path();
 
         match self.action_menu_operation {
             Some(Operation::Rename) => {
-                let res = rename_file(&path.unwrap(), &self.action_menu_buffer);
+                let res = rename_file(&abs_path, &self.action_menu_buffer);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }
-                self.window_focus = WindowFocus::Tree;
             }
             Some(Operation::CreateFile) => {
-                let mut current_dir_path: String = self.get_current_dir_abs_path();
-                current_dir_path.push('/');
-                current_dir_path.push_str(&self.action_menu_buffer);
-                let res = create_file(&current_dir_path);
+                let full_path = format!("{}/{}", current_dir_path, &self.action_menu_buffer);
+                let res = create_file(&full_path);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }
-                self.window_focus = WindowFocus::Tree;
             }
             Some(Operation::CreateDir) => {
-                let mut current_dir_path: String = self.get_current_dir_abs_path();
-                current_dir_path.push('/');
-                current_dir_path.push_str(&self.action_menu_buffer);
-                let res = create_directory(&current_dir_path);
+                let full_path = format!("{}/{}", current_dir_path, &self.action_menu_buffer);
+                let res = create_directory(&full_path);
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 }
-                self.window_focus = WindowFocus::Tree;
+            }
+            Some(Operation::CustomCommand) => {
+                let res = run_custom_command(current_dir_path, &self.action_menu_buffer);
+                match res {
+                    Ok(output) => self.info_message = Some(output),
+                    Err(err) => self.error_message = Some(err.to_string()),
+                }
             }
             _ => {}
         }
+        self.window_focus = WindowFocus::Tree;
         self.populate_current_child_nodes();
     }
 
@@ -170,6 +177,13 @@ impl App {
         let after: String = chars.skip(cx).collect::<String>();
         self.action_menu_buffer = after;
         self.action_menu_cursor_x = 0;
+    }
+
+    pub fn action_menu_input_clear_forward(&mut self) {
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        self.action_menu_buffer = before;
     }
 
     pub fn action_menu_input_backspace(&mut self) {

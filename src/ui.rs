@@ -144,7 +144,7 @@ fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
         .border_type(BorderType::Rounded)
         .bg(Color::DarkGray);
     let widget = Paragraph::new(p_line)
-        .wrap(Wrap { trim: true })
+        .wrap(Wrap { trim: false })
         .block(title)
         .alignment(Alignment::Left);
 

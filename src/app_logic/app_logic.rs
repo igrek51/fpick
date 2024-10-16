@@ -12,7 +12,7 @@ use crate::filesystem::{
     get_path_file_nodes, get_string_abs_path, list_files, nodes_start_with, trim_end_slash,
     FileNode, FileType,
 };
-use crate::numbers::ClampNumExt;
+use crate::numbers::{ClampNumExt, MyIntExt};
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
 
 const HELP_TEXT: &str = "fpick - interactive file picker. 
@@ -116,15 +116,15 @@ impl App {
     pub fn move_cursor(&mut self, delta: i32) {
         match self.window_focus {
             WindowFocus::Tree => {
-                let new_cursor = (self.dir_cursor as i32 + delta)
-                    .clamp_max(self.child_tree_nodes.len() as i32 - 1)
-                    .clamp_min(0) as usize;
+                let new_cursor = self
+                    .dir_cursor
+                    .move_rotating(delta, self.child_tree_nodes.len());
                 self.set_dir_cursor(new_cursor);
             }
             WindowFocus::ActionMenu => {
-                let new_cursor = (self.action_menu_cursor_y as i32 + delta)
-                    .clamp_max(self.known_menu_actions.len() as i32 - 1)
-                    .clamp_min(0) as usize;
+                let new_cursor = self
+                    .action_menu_cursor_y
+                    .move_rotating(delta, self.known_menu_actions.len());
                 self.action_menu_cursor_y = new_cursor;
             }
             _ => {}

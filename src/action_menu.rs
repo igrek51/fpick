@@ -31,6 +31,7 @@ pub enum Operation {
     Delete,
     CopyToClipboard { is_relative_path: bool },
     FileDetails,
+    CustomCommand,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -98,6 +99,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "Details",
             operation: Operation::FileDetails,
+        },
+        MenuAction {
+            name: "Run command",
+            operation: Operation::CustomCommand,
         },
     ]
 }
@@ -240,4 +245,35 @@ pub fn human_readable_size(size_bytes: u64) -> String {
         i += 1;
     }
     format!("{:.2} {} ({} bytes)", size, units[i], size_bytes)
+}
+
+pub fn run_custom_command(workdir: String, cmd: &String) -> Result<String> {
+    log(format!("Executing command: {:?}", cmd).as_str());
+    let c = Command::new("sh")
+        .arg("-c")
+        .arg(cmd.clone())
+        .current_dir(workdir)
+        .stdin(Stdio::inherit())
+        .stderr(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .context("failed to start a command")?;
+    let output = c
+        .wait_with_output()
+        .context("failed to read command output")?;
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !output.status.success() {
+        let error = format!(
+            "Failed to execute command: {:?}\nExit code: {}\n{}\n{}",
+            cmd, output.status, stderr, stdout,
+        );
+        log(error.as_str());
+        return Err(anyhow!(error));
+    }
+    Ok(format!(
+        "Command \"{}\" executed successfully.\nOutput:\n{}\n{}",
+        cmd, stderr, stdout,
+    ))
 }
