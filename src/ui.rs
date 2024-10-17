@@ -71,7 +71,7 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
     frame.render_stateful_widget(widget, area, &mut app.file_tree_state);
 }
 
-fn render_filter_panel(app: &mut App, frame: &mut Frame, area: Rect) {
+fn render_filter_panel(app: &App, frame: &mut Frame, area: Rect) {
     let p_text = format!("{}\u{2588}", app.filter_text);
     let title = Block::default()
         .title("Search")
@@ -88,7 +88,7 @@ fn render_filter_panel(app: &mut App, frame: &mut Frame, area: Rect) {
     frame.render_widget(widget, area);
 }
 
-fn render_action_popup(app: &mut App, frame: &mut Frame) {
+fn render_action_popup(app: &App, frame: &mut Frame) {
     let list_items: Vec<ListItem> = app
         .known_menu_actions
         .iter()
@@ -120,21 +120,8 @@ fn render_action_popup(app: &mut App, frame: &mut Frame) {
     frame.render_stateful_widget(widget, area, &mut list_state);
 }
 
-fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
-    let display_buffer = format!("{} ", app.action_menu_buffer);
-    let chars: Chars<'_> = display_buffer.chars();
-    let cx = app.action_menu_cursor_x;
-    let buffer_pre: String = chars.clone().take(cx).collect::<String>();
-    let highlighted: String = chars.clone().skip(cx).take(1).collect::<String>();
-    let buffer_post: String = chars.skip(cx + 1).collect::<String>();
-    let p_line = Line::from(vec![
-        Span::styled(buffer_pre, Style::default().fg(Color::White)),
-        Span::styled(
-            highlighted,
-            Style::default().fg(Color::Black).bg(Color::White),
-        ),
-        Span::styled(buffer_post, Style::default().fg(Color::White)),
-    ]);
+fn render_action_popup_step2(app: &App, frame: &mut Frame) {
+    let p_line = render_action_popup_step2_line(app);
 
     let title = Block::default()
         .title(app.action_menu_title.as_str())
@@ -156,7 +143,7 @@ fn render_action_popup_step2(app: &mut App, frame: &mut Frame) {
     frame.render_widget(widget, area);
 }
 
-fn render_error_popup(app: &mut App, frame: &mut Frame) {
+fn render_error_popup(app: &App, frame: &mut Frame) {
     if app.error_message.is_none() {
         return;
     }
@@ -192,7 +179,7 @@ fn render_error_popup(app: &mut App, frame: &mut Frame) {
     frame.render_widget(ok_label, ok_label_area);
 }
 
-fn render_info_popup(app: &mut App, frame: &mut Frame) {
+fn render_info_popup(app: &App, frame: &mut Frame) {
     if app.info_message.is_none() {
         return;
     }
@@ -242,4 +229,36 @@ fn centered_rect(w: u16, h: u16, r: Rect) -> Rect {
         width: w,
         height: h,
     }
+}
+
+fn render_action_popup_step2_line(app: &App) -> Line {
+    let cx = app.action_menu_cursor_x;
+    let chars: Chars<'_> = app.action_menu_buffer.chars();
+    if cx >= chars.clone().count() {
+        return Line::from(vec![
+            Span::styled(
+                app.action_menu_buffer.clone(),
+                Style::default().fg(Color::White),
+            ),
+            Span::styled("█", Style::default().fg(Color::White)),
+        ]);
+    }
+    let buffer_pre: String = chars.clone().take(cx).collect::<String>();
+    let highlighted: String = chars.clone().skip(cx).take(1).collect::<String>();
+    let buffer_post: String = chars.skip(cx + 1).collect::<String>();
+    if highlighted == " " {
+        return Line::from(vec![
+            Span::styled(buffer_pre, Style::default().fg(Color::White)),
+            Span::styled("█", Style::default().fg(Color::White)),
+            Span::styled(buffer_post, Style::default().fg(Color::White)),
+        ]);
+    }
+    Line::from(vec![
+        Span::styled(buffer_pre, Style::default().fg(Color::White)),
+        Span::styled(
+            highlighted,
+            Style::default().fg(Color::Black).bg(Color::White),
+        ),
+        Span::styled(buffer_post, Style::default().fg(Color::White)),
+    ])
 }

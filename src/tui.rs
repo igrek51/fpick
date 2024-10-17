@@ -8,8 +8,8 @@ pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBacken
 use crate::{
     app::App,
     event::{Event, EventHandler},
+    keyboard::update_on_key,
     ui,
-    update::update,
 };
 
 #[derive(Debug)]
@@ -54,7 +54,7 @@ impl Tui {
     pub fn handle_events(&mut self, app: &mut App) -> Result<()> {
         match self.event_handler.next()? {
             Event::Tick => app.tick(),
-            Event::Key(key_event) => update(app, key_event, self),
+            Event::Key(key_event) => update_on_key(app, key_event, self),
             Event::Resize => {}
         };
         Ok(())

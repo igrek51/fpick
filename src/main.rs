@@ -5,12 +5,12 @@ mod appdata;
 mod errors;
 mod event;
 mod filesystem;
+mod keyboard;
 mod logs;
 mod numbers;
 mod tree;
 mod tui;
 mod ui;
-mod update;
 
 use std::process::ExitCode;
 

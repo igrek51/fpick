@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{app::App, appdata::WindowFocus, logs::log, tui::Tui};
 
-pub fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
+pub fn update_on_key(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match app.window_focus {
         WindowFocus::Tree => on_key_tree(app, key_event),
         WindowFocus::ActionMenu => on_key_action_menu(app, key_event, tui),
@@ -46,6 +46,8 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
         KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
+        KeyCode::PageDown => app.move_cursor(20),
+        KeyCode::PageUp => app.move_cursor(-20),
         KeyCode::Home => app.move_cursor(-(app.known_menu_actions.len() as i32)),
         KeyCode::End => app.move_cursor(app.known_menu_actions.len() as i32),
         KeyCode::Enter => app.execute_dialog_action(tui),

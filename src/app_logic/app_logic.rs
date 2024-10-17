@@ -116,15 +116,25 @@ impl App {
     pub fn move_cursor(&mut self, delta: i32) {
         match self.window_focus {
             WindowFocus::Tree => {
-                let new_cursor = self
-                    .dir_cursor
-                    .move_rotating(delta, self.child_tree_nodes.len());
+                let new_cursor = match delta.abs() {
+                    1 => self
+                        .dir_cursor
+                        .move_rotating(delta, self.child_tree_nodes.len()),
+                    _ => self
+                        .dir_cursor
+                        .move_bound(delta, self.child_tree_nodes.len()),
+                };
                 self.set_dir_cursor(new_cursor);
             }
             WindowFocus::ActionMenu => {
-                let new_cursor = self
-                    .action_menu_cursor_y
-                    .move_rotating(delta, self.known_menu_actions.len());
+                let new_cursor = match delta.abs() {
+                    1 => self
+                        .action_menu_cursor_y
+                        .move_rotating(delta, self.known_menu_actions.len()),
+                    _ => self
+                        .action_menu_cursor_y
+                        .move_bound(delta, self.known_menu_actions.len()),
+                };
                 self.action_menu_cursor_y = new_cursor;
             }
             _ => {}
