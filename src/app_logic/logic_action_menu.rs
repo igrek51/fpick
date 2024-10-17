@@ -209,6 +209,71 @@ impl App {
         }
     }
 
+    pub fn action_menu_input_backspace_word(&mut self) {
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        let after: String = chars.skip(cx).collect::<String>();
+        let mut before_words = before.split(' ').collect::<Vec<&str>>();
+        if !before_words.is_empty() {
+            if before_words.last().unwrap().is_empty() {
+                before_words.pop();
+            } else {
+                *before_words.last_mut().unwrap() = "";
+            }
+            let before: String = before_words.join(" ");
+            self.action_menu_cursor_x = before.chars().count();
+            self.action_menu_buffer = before + &after;
+        }
+    }
+
+    pub fn action_menu_input_delete_word(&mut self) {
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        let after: String = chars.skip(cx).collect::<String>();
+        let mut after_words = after.split(' ').collect::<Vec<&str>>();
+        if !after_words.is_empty() {
+            if after_words.first().unwrap().is_empty() {
+                after_words.remove(0);
+            } else {
+                *after_words.first_mut().unwrap() = "";
+            }
+            let after: String = after_words.join(" ");
+            self.action_menu_buffer = before + &after;
+        }
+    }
+
+    pub fn action_menu_input_left_word(&mut self) {
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let before: String = chars.clone().take(cx).collect::<String>();
+        let mut before_words = before.split(' ').collect::<Vec<&str>>();
+        if !before_words.is_empty() {
+            if before_words.last().unwrap().is_empty() {
+                before_words.pop();
+            } else {
+                *before_words.last_mut().unwrap() = "";
+            }
+            let before: String = before_words.join(" ");
+            self.action_menu_cursor_x = before.chars().count();
+        }
+    }
+
+    pub fn action_menu_input_right_word(&mut self) {
+        let chars: Chars<'_> = self.action_menu_buffer.chars();
+        let cx = self.action_menu_cursor_x;
+        let after: String = chars.skip(cx).collect::<String>();
+        let after_words = after.split(' ').collect::<Vec<&str>>();
+        if !after_words.is_empty() {
+            if after_words.first().unwrap().is_empty() {
+                self.action_menu_cursor_x += 1;
+            } else {
+                self.action_menu_cursor_x += after_words.first().unwrap().chars().count();
+            }
+        }
+    }
+
     pub fn action_menu_input_left(&mut self) {
         if self.action_menu_cursor_x > 0 {
             self.action_menu_cursor_x -= 1;

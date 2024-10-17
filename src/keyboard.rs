@@ -64,10 +64,15 @@ pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tu
         KeyCode::Enter => app.execute_dialog_action_step2(tui),
         KeyCode::Char('u') if is_ctrl(key_event) => app.action_menu_input_clear_backwards(),
         KeyCode::Char('k') if is_ctrl(key_event) => app.action_menu_input_clear_forward(),
+        KeyCode::Char('w') if is_ctrl(key_event) => app.action_menu_input_backspace_word(),
+        KeyCode::Backspace if is_ctrl(key_event) => app.action_menu_input_backspace_word(),
+        KeyCode::Backspace if is_alt(key_event) => app.action_menu_input_backspace_word(),
+        KeyCode::Delete if is_ctrl(key_event) => app.action_menu_input_delete_word(),
         KeyCode::Backspace => app.action_menu_input_backspace(),
         KeyCode::Delete => app.action_menu_input_delete(),
-        KeyCode::Char('w') if is_ctrl(key_event) => app.action_menu_input_backspace(),
         KeyCode::Char(c) => app.action_menu_input_append(c),
+        KeyCode::Left if is_ctrl(key_event) => app.action_menu_input_left_word(),
+        KeyCode::Right if is_ctrl(key_event) => app.action_menu_input_right_word(),
         KeyCode::Left => app.action_menu_input_left(),
         KeyCode::Right => app.action_menu_input_right(),
         KeyCode::Home => app.action_menu_input_home(),
@@ -78,4 +83,8 @@ pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tu
 
 fn is_ctrl(key_event: KeyEvent) -> bool {
     key_event.modifiers == KeyModifiers::CONTROL
+}
+
+fn is_alt(key_event: KeyEvent) -> bool {
+    key_event.modifiers == KeyModifiers::ALT
 }
