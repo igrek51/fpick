@@ -29,6 +29,7 @@ pub struct App {
     pub exit_code: i32,
     pub error_message: Option<String>,
     pub info_message: Option<String>,
+    pub info_message_scroll: usize,
     pub window_focus: WindowFocus,
     pub known_menu_actions: Vec<MenuAction>,
     pub action_menu_cursor_y: usize,

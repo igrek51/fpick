@@ -14,7 +14,7 @@ use crate::app::App;
 use crate::tree::TreeNode;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
-    let area = frame.size();
+    let area = frame.area();
     let middle_h = area.height - 3;
 
     let layout = Layout::default()
@@ -114,7 +114,7 @@ fn render_action_popup(app: &App, frame: &mut Frame) {
         .max()
         .unwrap_or(0)
         + 8;
-    let area = centered_rect(width, height, frame.size());
+    let area = centered_rect(width, height, frame.area());
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
     frame.render_stateful_widget(widget, area, &mut list_state);
@@ -135,9 +135,9 @@ fn render_action_popup_step2(app: &App, frame: &mut Frame) {
         .block(title)
         .alignment(Alignment::Left);
 
-    let width = frame.size().width * 3 / 4;
+    let width = frame.area().width * 3 / 4;
     let height = 4;
-    let area = centered_rect(width, height, frame.size());
+    let area = centered_rect(width, height, frame.area());
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
     frame.render_widget(widget, area);
@@ -164,9 +164,9 @@ fn render_error_popup(app: &App, frame: &mut Frame) {
         .style(Style::default().bold().fg(Color::LightRed).bg(Color::White))
         .alignment(Alignment::Center);
 
-    let width: u16 = (frame.size().width as f32 * 0.75f32) as u16;
-    let height: u16 = frame.size().height / 2;
-    let area = centered_rect(width, height, frame.size());
+    let width: u16 = (frame.area().width as f32 * 0.75f32) as u16;
+    let height: u16 = frame.area().height / 2;
+    let area = centered_rect(width, height, frame.area());
     let ok_label_area = Rect {
         x: area.x + 1,
         y: area.y + area.height - 2,
@@ -184,6 +184,13 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         return;
     }
     let info_message: String = app.info_message.clone().unwrap();
+    let message_lines = textwrap::wrap(info_message.as_str(), (frame.area().width - 2) as usize);
+    let skipped_lines = message_lines
+        .into_iter()
+        .map(|s| s.to_string())
+        .skip(app.info_message_scroll)
+        .collect::<Vec<String>>();
+    let wrapped_message: String = skipped_lines.join("\n");
 
     let title = Block::default()
         .title("Info")
@@ -192,8 +199,8 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .borders(Borders::ALL)
         .bg(Color::Blue)
         .border_type(BorderType::Rounded);
-    let error_window = Paragraph::new(info_message)
-        .wrap(Wrap { trim: true })
+    let error_window = Paragraph::new(Text::raw(wrapped_message))
+        .wrap(Wrap { trim: false })
         .block(title)
         .style(Style::default().fg(Color::White));
     let ok_label = Paragraph::new("OK")
@@ -205,9 +212,9 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         )
         .alignment(Alignment::Center);
 
-    let width: u16 = (frame.size().width as f32 * 0.75f32) as u16;
-    let height: u16 = frame.size().height / 2;
-    let area = centered_rect(width, height, frame.size());
+    let width: u16 = (frame.area().width as f32 * 0.75f32) as u16;
+    let height: u16 = frame.area().height / 2;
+    let area = centered_rect(width, height, frame.area());
     let ok_label_area = Rect {
         x: area.x + 1,
         y: area.y + area.height - 2,

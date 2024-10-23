@@ -103,7 +103,7 @@ impl App {
                 if res.is_err() {
                     self.error_message = Some(res.err().unwrap().to_string());
                 } else {
-                    self.info_message = Some(res.unwrap());
+                    self.show_info(res.unwrap());
                 }
             }
             Operation::CustomCommand => {
@@ -152,7 +152,7 @@ impl App {
             Some(Operation::CustomCommand) => {
                 let res = run_custom_command(current_dir_path, &self.action_menu_buffer);
                 match res {
-                    Ok(output) => self.info_message = Some(output),
+                    Ok(output) => self.show_info(output),
                     Err(err) => self.error_message = Some(err.to_string()),
                 }
             }

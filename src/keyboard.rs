@@ -3,6 +3,9 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::{app::App, appdata::WindowFocus, logs::log, tui::Tui};
 
 pub fn update_on_key(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
+    if handle_master_key(app, key_event) {
+        return;
+    }
     match app.window_focus {
         WindowFocus::Tree => on_key_tree(app, key_event),
         WindowFocus::ActionMenu => on_key_action_menu(app, key_event, tui),
@@ -10,13 +13,22 @@ pub fn update_on_key(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     }
 }
 
-pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
+pub fn handle_master_key(app: &mut App, key_event: KeyEvent) -> bool {
     match key_event.code {
         KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
         KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
+        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
+        KeyCode::Down if app.has_info() => app.move_cursor(1),
+        KeyCode::Up if app.has_info() => app.move_cursor(-1),
+        _ => return false,
+    };
+    true
+}
+
+pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
+    match key_event.code {
         KeyCode::Esc if !app.filter_text.is_empty() => app.clear_search_text(),
         KeyCode::Esc => app.quit(),
-        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
         KeyCode::Left => app.go_up(),
@@ -40,10 +52,7 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
 
 pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match key_event.code {
-        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
-        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
         KeyCode::Esc => app.close_action_dialog(),
-        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
         KeyCode::Down => app.move_cursor(1),
         KeyCode::Up => app.move_cursor(-1),
         KeyCode::PageDown => app.move_cursor(20),
@@ -57,10 +66,7 @@ pub fn on_key_action_menu(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
 
 pub fn on_key_action_menu_step2(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
     match key_event.code {
-        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
-        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
         KeyCode::Esc => app.close_action_dialog(),
-        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
         KeyCode::Enter => app.execute_dialog_action_step2(tui),
         KeyCode::Char('u') if is_ctrl(key_event) => app.action_menu_input_clear_backwards(),
         KeyCode::Char('k') if is_ctrl(key_event) => app.action_menu_input_clear_forward(),

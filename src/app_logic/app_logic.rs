@@ -114,6 +114,11 @@ impl App {
     }
 
     pub fn move_cursor(&mut self, delta: i32) {
+        if self.has_info() {
+            self.info_message_scroll =
+                self.info_message_scroll.add_cast(delta).clamp_min(0) as usize;
+            return;
+        }
         match self.window_focus {
             WindowFocus::Tree => {
                 let new_cursor = match delta.abs() {
@@ -386,6 +391,11 @@ impl App {
 
     pub fn has_info(&self) -> bool {
         self.info_message.is_some()
+    }
+
+    pub fn show_info(&mut self, message: String) {
+        self.info_message = Some(message);
+        self.info_message_scroll = 0;
     }
 
     pub fn clear_info(&mut self) {

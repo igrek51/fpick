@@ -43,6 +43,7 @@ impl ClampNumExt<i32> for i32 {
 pub trait MyIntExt<T> {
     fn move_rotating(&self, delta: i32, max: usize) -> T;
     fn move_bound(&self, delta: i32, max: usize) -> T;
+    fn add_cast(&self, delta: i32) -> i32;
 }
 
 impl MyIntExt<usize> for usize {
@@ -58,5 +59,9 @@ impl MyIntExt<usize> for usize {
         (*self as i32 + delta)
             .clamp_max(max as i32 - 1)
             .clamp_min(0) as usize
+    }
+
+    fn add_cast(&self, delta: i32) -> i32 {
+        *self as i32 + delta
     }
 }
