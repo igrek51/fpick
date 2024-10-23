@@ -2,7 +2,8 @@ use std::str::Chars;
 
 use crate::action_menu::MenuAction;
 use crate::appdata::WindowFocus;
-use crate::numbers::ClampNumExt;
+use crate::logs::log;
+use crate::numbers::{ClampNumExt, MyIntExt};
 use ratatui::{prelude::*, widgets::*};
 use ratatui::{
     prelude::{Alignment, Frame},
@@ -149,16 +150,17 @@ fn render_error_popup(app: &App, frame: &mut Frame) {
     }
     let error_message: String = app.error_message.clone().unwrap();
 
-    let title = Block::default()
+    let title_block = Block::default()
         .title("Error")
         .title_style(Style::new().bold())
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL)
         .bg(Color::Red)
+        .padding(Padding::bottom(1))
         .border_type(BorderType::Rounded);
     let error_window = Paragraph::new(error_message)
-        .wrap(Wrap { trim: true })
-        .block(title)
+        .wrap(Wrap { trim: false })
+        .block(title_block)
         .style(Style::default().fg(Color::White));
     let ok_label = Paragraph::new("OK")
         .style(Style::default().bold().fg(Color::LightRed).bg(Color::White))
@@ -173,8 +175,7 @@ fn render_error_popup(app: &App, frame: &mut Frame) {
         width: area.width - 2,
         height: 1,
     };
-    let buffer = frame.buffer_mut();
-    Clear.render(area, buffer);
+    Clear.render(area, frame.buffer_mut());
     frame.render_widget(error_window, area);
     frame.render_widget(ok_label, ok_label_area);
 }
@@ -183,14 +184,26 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
     if app.info_message.is_none() {
         return;
     }
+
+    let width: u16 = frame.area().width.fraction(0.75);
+    let max_height: u16 = frame.area().height.fraction(0.75);
     let info_message: String = app.info_message.clone().unwrap();
-    let message_lines = textwrap::wrap(info_message.as_str(), (frame.area().width - 2) as usize);
-    let skipped_lines = message_lines
+    let wrapped_lines = textwrap::wrap(info_message.as_str(), (width - 3) as usize);
+    let wrapped_message = wrapped_lines.join("\n");
+    let skipped_lines = wrapped_message
+        .lines()
         .into_iter()
         .map(|s| s.to_string())
         .skip(app.info_message_scroll)
         .collect::<Vec<String>>();
-    let wrapped_message: String = skipped_lines.join("\n");
+    let display_message: String = skipped_lines.join("\n");
+    let count = wrapped_message.lines().count();
+    log(format!("Info: {} lines", count).as_str());
+    let text_height: u16 = wrapped_message
+        .lines()
+        .count()
+        .clamp_min(3)
+        .clamp_max(max_height.into()) as u16;
 
     let title_block = Block::default()
         .title("Info")
@@ -200,7 +213,7 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .bg(Color::Blue)
         .padding(Padding::bottom(1))
         .border_type(BorderType::Rounded);
-    let error_window = Paragraph::new(Text::raw(wrapped_message))
+    let error_window = Paragraph::new(Text::raw(display_message))
         .wrap(Wrap { trim: false })
         .block(title_block)
         .style(Style::default().fg(Color::White));
@@ -213,17 +226,15 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         )
         .alignment(Alignment::Center);
 
-    let width: u16 = (frame.area().width as f32 * 0.75f32) as u16;
-    let height: u16 = frame.area().height / 2;
-    let area = centered_rect(width, height, frame.area());
+    let width: u16 = frame.area().width.fraction(0.75);
+    let area = centered_rect(width, text_height + 3, frame.area());
     let ok_label_area = Rect {
         x: area.x + 1,
         y: area.y + area.height - 2,
         width: area.width - 2,
         height: 1,
     };
-    let buffer = frame.buffer_mut();
-    Clear.render(area, buffer);
+    Clear.render(area, frame.buffer_mut());
     frame.render_widget(error_window, area);
     frame.render_widget(ok_label, ok_label_area);
 }

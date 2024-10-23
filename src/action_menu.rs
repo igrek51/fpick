@@ -32,6 +32,7 @@ pub enum Operation {
     CopyToClipboard { is_relative_path: bool },
     FileDetails,
     CustomCommand,
+    ViewContent,
 }
 
 pub fn generate_known_actions() -> Vec<MenuAction> {
@@ -43,7 +44,11 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Show in less",
+            name: "View",
+            operation: Operation::ViewContent,
+        },
+        MenuAction {
+            name: "View in less",
             operation: Operation::InteractiveShellCommand {
                 template: "less \"{}\"",
             },
@@ -55,26 +60,8 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Edit in sudo vim",
-            operation: Operation::InteractiveShellCommand {
-                template: "sudo vim \"{}\"",
-            },
-        },
-        MenuAction {
             name: "Delete",
             operation: Operation::Delete,
-        },
-        MenuAction {
-            name: "Copy relative path to clipboard",
-            operation: Operation::CopyToClipboard {
-                is_relative_path: true,
-            },
-        },
-        MenuAction {
-            name: "Copy absolute path to clipboard",
-            operation: Operation::CopyToClipboard {
-                is_relative_path: false,
-            },
         },
         MenuAction {
             name: "Rename",
@@ -89,6 +76,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             operation: Operation::CreateDir,
         },
         MenuAction {
+            name: "Details",
+            operation: Operation::FileDetails,
+        },
+        MenuAction {
             name: "Pick absolute path",
             operation: Operation::PickAbsolutePath,
         },
@@ -97,8 +88,16 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             operation: Operation::PickRelativePath,
         },
         MenuAction {
-            name: "Details",
-            operation: Operation::FileDetails,
+            name: "Copy absolute path to clipboard",
+            operation: Operation::CopyToClipboard {
+                is_relative_path: false,
+            },
+        },
+        MenuAction {
+            name: "Copy relative path to clipboard",
+            operation: Operation::CopyToClipboard {
+                is_relative_path: true,
+            },
         },
         MenuAction {
             name: "Run command",
@@ -276,4 +275,9 @@ pub fn run_custom_command(workdir: String, cmd: &String) -> Result<String> {
         "Command \"{}\" executed successfully. Output:\n\n{}\n{}",
         cmd, stderr, stdout,
     ))
+}
+
+pub fn read_file_content(abs_path: &String) -> Result<String> {
+    let content: String = fs::read_to_string(abs_path).context("Unable to read file")?;
+    Ok(content)
 }

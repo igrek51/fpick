@@ -2,8 +2,8 @@ use std::str::Chars;
 
 use crate::action_menu::{
     copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
-    execute_interactive_shell_operation, execute_shell_operation, get_file_details, rename_file,
-    run_custom_command, MenuAction, Operation,
+    execute_interactive_shell_operation, execute_shell_operation, get_file_details,
+    read_file_content, rename_file, run_custom_command, MenuAction, Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -112,6 +112,17 @@ impl App {
                 self.action_menu_title = format!("Run command at {}", current_dir_path);
                 self.action_menu_buffer = format!("\"{}\"", abs_path);
                 self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+            }
+            Operation::ViewContent => {
+                self.window_focus = WindowFocus::Tree;
+                if !is_directory {
+                    let res = read_file_content(&abs_path);
+                    if res.is_err() {
+                        self.error_message = Some(res.err().unwrap().to_string());
+                    } else {
+                        self.show_info(res.unwrap());
+                    }
+                }
             }
         }
         self.populate_current_child_nodes();
