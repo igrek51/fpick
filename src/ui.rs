@@ -192,16 +192,17 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .collect::<Vec<String>>();
     let wrapped_message: String = skipped_lines.join("\n");
 
-    let title = Block::default()
+    let title_block = Block::default()
         .title("Info")
         .title_style(Style::new().bold())
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL)
         .bg(Color::Blue)
+        .padding(Padding::bottom(1))
         .border_type(BorderType::Rounded);
     let error_window = Paragraph::new(Text::raw(wrapped_message))
         .wrap(Wrap { trim: false })
-        .block(title)
+        .block(title_block)
         .style(Style::default().fg(Color::White));
     let ok_label = Paragraph::new("OK")
         .style(

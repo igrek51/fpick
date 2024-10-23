@@ -273,7 +273,7 @@ pub fn run_custom_command(workdir: String, cmd: &String) -> Result<String> {
         return Err(anyhow!(error));
     }
     Ok(format!(
-        "Command \"{}\" executed successfully.\nOutput:\n{}\n{}",
+        "Command \"{}\" executed successfully. Output:\n\n{}\n{}",
         cmd, stderr, stdout,
     ))
 }
