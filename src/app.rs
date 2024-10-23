@@ -6,6 +6,7 @@ use std::thread;
 
 use crate::action_menu::{generate_known_actions, MenuAction, Operation};
 use crate::appdata::WindowFocus;
+use crate::background::BackgroundEvent;
 use crate::filesystem::FileNode;
 use crate::logs::print_logs;
 use crate::tree::TreeNode;
@@ -37,13 +38,30 @@ pub struct App {
     pub action_menu_operation: Option<Operation>,
     pub action_menu_title: String,
     pub action_menu_buffer: String,
+    pub background_event_channel: BackgroundEventChannel,
+}
+
+#[derive(Debug)]
+pub struct BackgroundEventChannel {
+    pub tx: mpsc::Sender<BackgroundEvent>,
+    pub rx: mpsc::Receiver<BackgroundEvent>,
+}
+
+impl Default for BackgroundEventChannel {
+    fn default() -> Self {
+        let (background_events_tx, background_events_rx) = mpsc::channel();
+        Self {
+            tx: background_events_tx,
+            rx: background_events_rx,
+        }
+    }
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
             known_menu_actions: generate_known_actions(),
-            ..Self::default()
+            ..Default::default()
         }
     }
 
@@ -81,7 +99,9 @@ impl App {
         return rx;
     }
 
-    pub fn tick(&mut self) {}
+    pub fn tick(&mut self) {
+        self.check_background_events();
+    }
 
     pub fn quit(&mut self) {
         self.should_quit = true;

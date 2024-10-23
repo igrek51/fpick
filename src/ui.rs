@@ -185,7 +185,6 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
     }
 
     let width: u16 = frame.area().width.fraction(0.75);
-    let max_height: u16 = frame.area().height.fraction(0.75);
     let info_message: String = app.info_message.clone().unwrap();
     let wrapped_lines = textwrap::wrap(info_message.as_str(), (width - 3) as usize);
     let wrapped_message = wrapped_lines.join("\n");
@@ -196,10 +195,11 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .skip(app.info_message_scroll)
         .collect::<Vec<String>>();
     let display_message: String = skipped_lines.join("\n");
+    let max_height: u16 = frame.area().height.fraction(0.75);
     let text_height: u16 = wrapped_message
         .lines()
         .count()
-        .clamp_min(3)
+        .clamp_min(5)
         .clamp_max(max_height.into()) as u16;
 
     let title_block = Block::default()

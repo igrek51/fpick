@@ -22,7 +22,7 @@ impl Tui {
     pub fn new() -> Self {
         let backend = CrosstermBackend::new(std::io::stderr());
         let terminal: CrosstermTerminal = Terminal::new(backend).unwrap();
-        let event_handler: EventHandler = EventHandler::new(3000).listen();
+        let event_handler: EventHandler = EventHandler::new(500).listen();
         Self {
             terminal,
             event_handler,

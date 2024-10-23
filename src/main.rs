@@ -2,6 +2,7 @@ mod action_menu;
 mod app;
 mod app_logic;
 mod appdata;
+mod background;
 mod errors;
 mod event;
 mod filesystem;

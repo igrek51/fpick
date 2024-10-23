@@ -7,6 +7,7 @@ use crate::action_menu::{
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
+use crate::background::BackgroundEvent;
 use crate::tree::TreeNode;
 use crate::tui::Tui;
 
@@ -161,11 +162,18 @@ impl App {
                 }
             }
             Some(Operation::CustomCommand) => {
-                let res = run_custom_command(current_dir_path, &self.action_menu_buffer);
-                match res {
-                    Ok(output) => self.show_info(output),
-                    Err(err) => self.error_message = Some(err.to_string()),
-                }
+                let current_dir_path = current_dir_path.clone();
+                let action_menu_buffer = self.action_menu_buffer.clone();
+                self.info_message =
+                    Some(format!("Running command...\n{}", &self.action_menu_buffer));
+                let result_tx = self.background_event_channel.tx.clone();
+                std::thread::spawn(move || {
+                    let res = run_custom_command(current_dir_path, &action_menu_buffer);
+                    match res {
+                        Ok(output) => result_tx.send(BackgroundEvent::InfoMessage(output)),
+                        Err(err) => result_tx.send(BackgroundEvent::ErrorMessage(err.to_string())),
+                    }
+                });
             }
             _ => {}
         }
