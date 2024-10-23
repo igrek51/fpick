@@ -1,10 +1,20 @@
+pub trait ClampNumType: PartialOrd + Copy {}
+impl ClampNumType for usize {}
+impl ClampNumType for u16 {}
+impl ClampNumType for u32 {}
+impl ClampNumType for u64 {}
+impl ClampNumType for i32 {}
+impl ClampNumType for i64 {}
+impl ClampNumType for f32 {}
+impl ClampNumType for f64 {}
+
 pub trait ClampNumExt<T> {
     fn clamp_min(&self, min: T) -> T;
     fn clamp_max(&self, max: T) -> T;
 }
 
-impl ClampNumExt<f32> for f32 {
-    fn clamp_min(&self, min: f32) -> f32 {
+impl<T: ClampNumType> ClampNumExt<T> for T {
+    fn clamp_min(&self, min: T) -> T {
         if *self < min {
             min
         } else {
@@ -12,43 +22,7 @@ impl ClampNumExt<f32> for f32 {
         }
     }
 
-    fn clamp_max(&self, max: f32) -> f32 {
-        if *self > max {
-            max
-        } else {
-            *self
-        }
-    }
-}
-
-impl ClampNumExt<i32> for i32 {
-    fn clamp_min(&self, min: i32) -> i32 {
-        if *self < min {
-            min
-        } else {
-            *self
-        }
-    }
-
-    fn clamp_max(&self, max: i32) -> i32 {
-        if *self > max {
-            max
-        } else {
-            *self
-        }
-    }
-}
-
-impl ClampNumExt<usize> for usize {
-    fn clamp_min(&self, min: usize) -> usize {
-        if *self < min {
-            min
-        } else {
-            *self
-        }
-    }
-
-    fn clamp_max(&self, max: usize) -> usize {
+    fn clamp_max(&self, max: T) -> T {
         if *self > max {
             max
         } else {

@@ -1,6 +1,6 @@
 [package]
 name = "fpick"
-version = "0.7.3"
+version = "0.7.4"
 license = "MIT"
 edition = "2021"
 description = "Interactive file picker"

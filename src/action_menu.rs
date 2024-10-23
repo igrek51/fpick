@@ -38,12 +38,6 @@ pub enum Operation {
 pub fn generate_known_actions() -> Vec<MenuAction> {
     vec![
         MenuAction {
-            name: "Open",
-            operation: Operation::ShellCommand {
-                template: "xdg-open \"{}\"",
-            },
-        },
-        MenuAction {
             name: "View",
             operation: Operation::ViewContent,
         },
@@ -60,12 +54,22 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Delete",
-            operation: Operation::Delete,
+            name: "Open with default",
+            operation: Operation::ShellCommand {
+                template: "xdg-open \"{}\"",
+            },
+        },
+        MenuAction {
+            name: "Details",
+            operation: Operation::FileDetails,
         },
         MenuAction {
             name: "Rename",
             operation: Operation::Rename,
+        },
+        MenuAction {
+            name: "Delete",
+            operation: Operation::Delete,
         },
         MenuAction {
             name: "Create file",
@@ -74,10 +78,6 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "Create directory",
             operation: Operation::CreateDir,
-        },
-        MenuAction {
-            name: "Details",
-            operation: Operation::FileDetails,
         },
         MenuAction {
             name: "Pick absolute path",

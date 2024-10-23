@@ -2,7 +2,6 @@ use std::str::Chars;
 
 use crate::action_menu::MenuAction;
 use crate::appdata::WindowFocus;
-use crate::logs::log;
 use crate::numbers::{ClampNumExt, MyIntExt};
 use ratatui::{prelude::*, widgets::*};
 use ratatui::{
@@ -197,8 +196,6 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .skip(app.info_message_scroll)
         .collect::<Vec<String>>();
     let display_message: String = skipped_lines.join("\n");
-    let count = wrapped_message.lines().count();
-    log(format!("Info: {} lines", count).as_str());
     let text_height: u16 = wrapped_message
         .lines()
         .count()
