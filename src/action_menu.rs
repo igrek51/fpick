@@ -32,6 +32,7 @@ pub enum Operation {
     CopyToClipboard { is_relative_path: bool },
     FileDetails,
     CustomCommand,
+    CustomInteractiveCommand,
     ViewContent,
 }
 
@@ -100,6 +101,10 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
+            name: "Run interactive command",
+            operation: Operation::CustomInteractiveCommand,
+        },
+        MenuAction {
             name: "Run command",
             operation: Operation::CustomCommand,
         },
@@ -117,8 +122,9 @@ pub fn execute_interactive_shell_operation(
     tui: &mut Tui,
 ) -> Result<()> {
     let cmd = String::from(command_template).replace("{}", path);
+    log(format!("Executing command: {:?}", cmd).as_str());
     tui.exit().context("failed to exit TUI mode")?;
-    let mut output = std::process::Command::new("sh")
+    let mut output = Command::new("sh")
         .arg("-c")
         .arg(cmd.clone())
         .stdin(Stdio::inherit())
@@ -275,6 +281,43 @@ pub fn run_custom_command(workdir: String, cmd: &String) -> Result<String> {
         "Command \"{}\" executed successfully. Output:\n\n{}\n{}",
         cmd, stderr, stdout,
     ))
+}
+
+pub fn run_custom_interactive_command(
+    workdir: String,
+    cmd: &String,
+    tui: &mut Tui,
+) -> Result<String> {
+    log(format!("Executing command: {:?}", cmd).as_str());
+    tui.exit().context("failed to exit TUI mode")?;
+    let c = Command::new("sh")
+        .arg("-c")
+        .arg(cmd.clone())
+        .current_dir(workdir)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .context("failed to start a command")?;
+    let output = c
+        .wait_with_output()
+        .context("failed to read command output")?;
+    tui.enter().context("failed to enter TUI mode again")?;
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !output.status.success() {
+        let error = format!(
+            "Failed to execute command: {:?}\nExit code: {}\n{}\n{}",
+            cmd,
+            output.status.code().unwrap_or(0),
+            stderr,
+            stdout,
+        );
+        log(error.as_str());
+        return Err(anyhow!(error));
+    }
+    Ok(format!("Command \"{}\" executed successfully.", cmd))
 }
 
 pub fn read_file_content(abs_path: &String) -> Result<String> {

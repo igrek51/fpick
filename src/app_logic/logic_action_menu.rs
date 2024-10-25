@@ -3,7 +3,8 @@ use std::str::Chars;
 use crate::action_menu::{
     copy_path_to_clipboard, create_directory, create_file, delete_tree_node,
     execute_interactive_shell_operation, execute_shell_operation, get_file_details,
-    read_file_content, rename_file, run_custom_command, MenuAction, Operation,
+    read_file_content, rename_file, run_custom_command, run_custom_interactive_command, MenuAction,
+    Operation,
 };
 use crate::app::App;
 use crate::appdata::WindowFocus;
@@ -114,6 +115,13 @@ impl App {
                 self.action_menu_buffer = format!("\"{}\"", abs_path);
                 self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
             }
+            Operation::CustomInteractiveCommand => {
+                self.window_focus = WindowFocus::ActionMenuStep2;
+                self.action_menu_operation = Some(action.operation.clone());
+                self.action_menu_title = format!("Run interactive command at {}", current_dir_path);
+                self.action_menu_buffer = format!("\"{}\"", abs_path);
+                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+            }
             Operation::ViewContent => {
                 self.window_focus = WindowFocus::Tree;
                 if !is_directory {
@@ -129,7 +137,7 @@ impl App {
         self.populate_current_child_nodes();
     }
 
-    pub fn execute_dialog_action_step2(&mut self, _: &mut Tui) {
+    pub fn execute_dialog_action_step2(&mut self, tui: &mut Tui) {
         let abs_path: String = match self.get_selected_abs_path() {
             Some(abs_path) => abs_path,
             None => return,
@@ -174,6 +182,14 @@ impl App {
                         Err(err) => result_tx.send(BackgroundEvent::ErrorMessage(err.to_string())),
                     }
                 });
+            }
+            Some(Operation::CustomInteractiveCommand) => {
+                let res =
+                    run_custom_interactive_command(current_dir_path, &self.action_menu_buffer, tui);
+                match res {
+                    Ok(output) => self.show_info(output),
+                    Err(err) => self.error_message = Some(err.to_string()),
+                }
             }
             _ => {}
         }
