@@ -96,3 +96,8 @@ Set alias for quick access:
 ```sh
 alias cfp='cd "$(fpick)"'
 ```
+
+Move file by interactively picking the source and destination:
+```sh
+mv "$(fpick)" "$(fpick)"
+```

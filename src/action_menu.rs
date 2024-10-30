@@ -39,6 +39,14 @@ pub enum Operation {
 pub fn generate_known_actions() -> Vec<MenuAction> {
     vec![
         MenuAction {
+            name: "Pick absolute path",
+            operation: Operation::PickAbsolutePath,
+        },
+        MenuAction {
+            name: "Pick relative path",
+            operation: Operation::PickRelativePath,
+        },
+        MenuAction {
             name: "View",
             operation: Operation::ViewContent,
         },
@@ -79,14 +87,6 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "Create directory",
             operation: Operation::CreateDir,
-        },
-        MenuAction {
-            name: "Pick absolute path",
-            operation: Operation::PickAbsolutePath,
-        },
-        MenuAction {
-            name: "Pick relative path",
-            operation: Operation::PickRelativePath,
         },
         MenuAction {
             name: "Copy absolute path to clipboard",

@@ -389,6 +389,10 @@ impl App {
         self.error_message = None;
     }
 
+    pub fn show_error(&mut self, message: String) {
+        self.error_message = Some(message);
+    }
+
     pub fn has_info(&self) -> bool {
         self.info_message.is_some()
     }

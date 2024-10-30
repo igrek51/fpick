@@ -39,20 +39,22 @@ impl App {
         let current_dir_path: String = self.get_current_dir_abs_path();
 
         let action: &MenuAction = &self.known_menu_actions[self.action_menu_cursor_y];
+        self.window_focus = WindowFocus::Tree;
+        self.action_menu_operation = Some(action.operation.clone());
         match action.operation {
             Operation::ShellCommand { template } => {
-                self.window_focus = WindowFocus::Tree;
-                let res = execute_shell_operation(&abs_path, template);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = execute_shell_operation(&abs_path, template);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
             }
             Operation::InteractiveShellCommand { template } => {
-                let res = execute_interactive_shell_operation(&abs_path, template, tui);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = execute_interactive_shell_operation(&abs_path, template, tui);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
-                self.window_focus = WindowFocus::Tree;
             }
             Operation::PickAbsolutePath => {
                 self.pick_selected_node(Some(false));
@@ -62,79 +64,74 @@ impl App {
             }
             Operation::Rename => {
                 let filename = abs_path.split('/').last().unwrap().to_string();
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(action.operation.clone());
-                self.action_menu_title = format!("New name for {}", filename);
-                self.action_menu_buffer = filename;
-                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+                self.open_action_menu_step2(format!("New name for {}", filename), filename);
             }
             Operation::CreateFile => {
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(action.operation.clone());
-                self.action_menu_title = format!("New file at {}", current_dir_path);
-                self.action_menu_buffer = "".to_string();
-                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+                self.open_action_menu_step2(
+                    format!("New file at {}", current_dir_path),
+                    String::new(),
+                );
             }
             Operation::CreateDir => {
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(action.operation.clone());
-                self.action_menu_title = format!("New directory at {}", current_dir_path);
-                self.action_menu_buffer = "".to_string();
-                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
+                self.open_action_menu_step2(
+                    format!("New directory at {}", current_dir_path),
+                    String::new(),
+                );
+            }
+            Operation::CustomCommand => {
+                self.open_action_menu_step2(
+                    format!("Run command at {}", current_dir_path),
+                    format!("\"{}\"", abs_path),
+                );
+            }
+            Operation::CustomInteractiveCommand => {
+                self.open_action_menu_step2(
+                    format!("Run interactive command at {}", current_dir_path),
+                    format!("\"{}\"", abs_path),
+                );
             }
             Operation::Delete => {
-                let res = delete_tree_node(&tree_node, &abs_path);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = delete_tree_node(&tree_node, &abs_path);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
-                self.window_focus = WindowFocus::Tree;
             }
             Operation::CopyToClipboard { is_relative_path } => {
-                self.window_focus = WindowFocus::Tree;
-                let res = match is_relative_path {
+                let result = match is_relative_path {
                     true => copy_path_to_clipboard(&relative_path.unwrap()),
                     false => copy_path_to_clipboard(&abs_path),
                 };
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
             }
             Operation::FileDetails => {
-                self.window_focus = WindowFocus::Tree;
-                let res = get_file_details(&abs_path, is_directory);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
-                } else {
-                    self.show_info(res.unwrap());
+                let result = get_file_details(&abs_path, is_directory);
+                match result {
+                    Ok(info) => self.show_info(info),
+                    Err(err) => self.show_error(err.to_string()),
                 }
             }
-            Operation::CustomCommand => {
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(action.operation.clone());
-                self.action_menu_title = format!("Run command at {}", current_dir_path);
-                self.action_menu_buffer = format!("\"{}\"", abs_path);
-                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
-            }
-            Operation::CustomInteractiveCommand => {
-                self.window_focus = WindowFocus::ActionMenuStep2;
-                self.action_menu_operation = Some(action.operation.clone());
-                self.action_menu_title = format!("Run interactive command at {}", current_dir_path);
-                self.action_menu_buffer = format!("\"{}\"", abs_path);
-                self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
-            }
             Operation::ViewContent => {
-                self.window_focus = WindowFocus::Tree;
                 if !is_directory {
-                    let res = read_file_content(&abs_path);
-                    if res.is_err() {
-                        self.error_message = Some(res.err().unwrap().to_string());
-                    } else {
-                        self.show_info(res.unwrap());
+                    let result = read_file_content(&abs_path);
+                    match result {
+                        Ok(info) => self.show_info(info),
+                        Err(err) => self.show_error(err.to_string()),
                     }
                 }
             }
         }
         self.populate_current_child_nodes();
+    }
+
+    fn open_action_menu_step2(&mut self, title: String, buffer: String) {
+        self.window_focus = WindowFocus::ActionMenuStep2;
+        self.action_menu_title = title;
+        self.action_menu_buffer = buffer;
+        self.action_menu_cursor_x = self.action_menu_buffer.chars().count();
     }
 
     pub fn execute_dialog_action_step2(&mut self, tui: &mut Tui) {
@@ -143,52 +140,54 @@ impl App {
             None => return,
         };
         if self.action_menu_buffer.is_empty() {
-            self.error_message = Some("No value given".to_string());
+            self.show_error("No value given".to_string());
             return;
         }
         let current_dir_path: String = self.get_current_dir_abs_path();
 
         match self.action_menu_operation {
             Some(Operation::Rename) => {
-                let res = rename_file(&abs_path, &self.action_menu_buffer);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = rename_file(&abs_path, &self.action_menu_buffer);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
             }
             Some(Operation::CreateFile) => {
                 let full_path = format!("{}/{}", current_dir_path, &self.action_menu_buffer);
-                let res = create_file(&full_path);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = create_file(&full_path);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
             }
             Some(Operation::CreateDir) => {
                 let full_path = format!("{}/{}", current_dir_path, &self.action_menu_buffer);
-                let res = create_directory(&full_path);
-                if res.is_err() {
-                    self.error_message = Some(res.err().unwrap().to_string());
+                let result = create_directory(&full_path);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
                 }
             }
             Some(Operation::CustomCommand) => {
                 let current_dir_path = current_dir_path.clone();
                 let action_menu_buffer = self.action_menu_buffer.clone();
-                self.info_message =
-                    Some(format!("Running command...\n{}", &self.action_menu_buffer));
+                self.show_info(format!("Running command...\n{}", &self.action_menu_buffer));
                 let result_tx = self.background_event_channel.tx.clone();
                 std::thread::spawn(move || {
-                    let res = run_custom_command(current_dir_path, &action_menu_buffer);
-                    match res {
+                    let result = run_custom_command(current_dir_path, &action_menu_buffer);
+                    match result {
                         Ok(output) => result_tx.send(BackgroundEvent::InfoMessage(output)),
                         Err(err) => result_tx.send(BackgroundEvent::ErrorMessage(err.to_string())),
                     }
                 });
             }
             Some(Operation::CustomInteractiveCommand) => {
-                let res =
+                let result =
                     run_custom_interactive_command(current_dir_path, &self.action_menu_buffer, tui);
-                match res {
+                match result {
                     Ok(output) => self.show_info(output),
-                    Err(err) => self.error_message = Some(err.to_string()),
+                    Err(err) => self.show_error(err.to_string()),
                 }
             }
             _ => {}
