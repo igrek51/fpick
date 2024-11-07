@@ -1,6 +1,6 @@
 [package]
 name = "fpick"
-version = "0.7.5"
+version = "0.7.6"
 license = "MIT"
 edition = "2021"
 description = "Interactive file picker"
@@ -12,7 +12,6 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.91"
-arboard = "3.4.1"
 chrono = "0.4.38"
 crossterm = "0.28.1"
 itertools = "0.13.0"

@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Ok, Result};
-use arboard::Clipboard;
 use chrono::prelude::{DateTime, Utc};
 use std::{
     fs,
@@ -122,7 +121,7 @@ pub fn execute_interactive_shell_operation(
     tui: &mut Tui,
 ) -> Result<()> {
     let cmd = String::from(command_template).replace("{}", path);
-    log(format!("Executing command: {:?}", cmd).as_str());
+    log(format!("Executing command: {}", cmd).as_str());
     tui.exit().context("failed to exit TUI mode")?;
     let mut output = Command::new("sh")
         .arg("-c")
@@ -147,7 +146,7 @@ pub fn execute_interactive_shell_operation(
 }
 
 pub fn execute_shell(cmd: String) -> Result<()> {
-    log(format!("Executing command: {:?}", cmd).as_str());
+    log(format!("Executing command: {}", cmd).as_str());
     let c = Command::new("sh")
         .arg("-c")
         .arg(cmd.clone())
@@ -209,10 +208,8 @@ pub fn delete_tree_node(tree_node: &TreeNode, abs_path: &String) -> Result<()> {
 }
 
 pub fn copy_path_to_clipboard(path: &String) -> Result<()> {
-    let mut clipboard = Clipboard::new().context("failed to create clipboard")?;
-    clipboard
-        .set_text(path)
-        .context("failed to copy path to clipboard")?;
+    let cmd = format!("printf \"%s\" \"{}\" | xclip -selection clipboard", path);
+    Command::new("sh").arg("-c").arg(cmd).spawn()?.wait()?;
     Ok(())
 }
 
@@ -253,7 +250,7 @@ pub fn human_readable_size(size_bytes: u64) -> String {
 }
 
 pub fn run_custom_command(workdir: String, cmd: &String) -> Result<String> {
-    log(format!("Executing command: {:?}", cmd).as_str());
+    log(format!("Executing command: {}", cmd).as_str());
     let c = Command::new("sh")
         .arg("-c")
         .arg(cmd.clone())
@@ -288,7 +285,7 @@ pub fn run_custom_interactive_command(
     cmd: &String,
     tui: &mut Tui,
 ) -> Result<String> {
-    log(format!("Executing command: {:?}", cmd).as_str());
+    log(format!("Executing command: {}", cmd).as_str());
     tui.exit().context("failed to exit TUI mode")?;
     let c = Command::new("sh")
         .arg("-c")
