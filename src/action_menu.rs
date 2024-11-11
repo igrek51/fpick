@@ -52,7 +52,7 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "View in less",
             operation: Operation::InteractiveShellCommand {
-                template: "less \"{}\"",
+                template: "less -Src \"{}\"",
             },
         },
         MenuAction {
