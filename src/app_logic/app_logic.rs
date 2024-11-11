@@ -116,7 +116,7 @@ impl App {
     pub fn move_cursor(&mut self, delta: i32) {
         if self.has_info() {
             self.info_message_scroll =
-                self.info_message_scroll.add_cast(delta).clamp_min(0) as usize;
+                self.info_message_scroll.add_casting(delta).clamp_min(0) as usize;
             return;
         }
         match self.window_focus {
