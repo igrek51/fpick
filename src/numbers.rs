@@ -32,7 +32,7 @@ impl<T: ClampNumType> ClampNumExt<T> for T {
 }
 
 #[allow(dead_code)]
-pub trait ConvertibleIntExt<T>: PartialOrd + Copy + PartialEq {
+pub trait ConvertibleIntExt<T>: PartialOrd + Copy + PartialEq + Eq {
     fn into_intermediary(&self) -> i32;
     fn from_intermediary(intermediary: i32) -> T;
 }
