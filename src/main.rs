@@ -9,6 +9,7 @@ mod filesystem;
 mod keyboard;
 mod logs;
 mod numbers;
+mod numbers_test;
 mod tree;
 mod tui;
 mod ui;
