@@ -210,7 +210,7 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         .bg(Color::Blue)
         .padding(Padding::bottom(1))
         .border_type(BorderType::Rounded);
-    let error_window = Paragraph::new(Text::raw(display_message))
+    let popup_window = Paragraph::new(Text::raw(display_message))
         .wrap(Wrap { trim: false })
         .block(title_block)
         .style(Style::default().fg(Color::White));
@@ -223,7 +223,6 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         )
         .alignment(Alignment::Center);
 
-    let width: u16 = frame.area().width.fraction(0.75);
     let area = centered_rect(width, text_height + 3, frame.area());
     let ok_label_area = Rect {
         x: area.x + 1,
@@ -232,7 +231,7 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
         height: 1,
     };
     Clear.render(area, frame.buffer_mut());
-    frame.render_widget(error_window, area);
+    frame.render_widget(popup_window, area);
     frame.render_widget(ok_label, ok_label_area);
 }
 
