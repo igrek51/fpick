@@ -20,6 +20,7 @@ pub fn handle_master_key(app: &mut App, key_event: KeyEvent) -> bool {
         KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
         KeyCode::Down if app.has_info() => app.move_cursor(1),
         KeyCode::Up if app.has_info() => app.move_cursor(-1),
+        KeyCode::Left | KeyCode::Right => return true,
         _ => return false,
     };
     true

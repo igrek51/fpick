@@ -398,6 +398,7 @@ impl App {
     }
 
     pub fn show_info(&mut self, message: String) {
+        let message = message.replace("\t", "    ");
         self.info_message = Some(message);
         self.info_message_scroll = 0;
     }
