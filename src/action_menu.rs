@@ -50,6 +50,14 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             operation: Operation::ViewContent,
         },
         MenuAction {
+            name: "Rename",
+            operation: Operation::Rename,
+        },
+        MenuAction {
+            name: "Delete",
+            operation: Operation::Delete,
+        },
+        MenuAction {
             name: "View in less",
             operation: Operation::InteractiveShellCommand {
                 template: "less -Src \"{}\"",
@@ -62,7 +70,7 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Open with default",
+            name: "Open with default app",
             operation: Operation::ShellCommand {
                 template: "xdg-open \"{}\"",
             },
@@ -70,14 +78,6 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
         MenuAction {
             name: "Details",
             operation: Operation::FileDetails,
-        },
-        MenuAction {
-            name: "Rename",
-            operation: Operation::Rename,
-        },
-        MenuAction {
-            name: "Delete",
-            operation: Operation::Delete,
         },
         MenuAction {
             name: "Create file",

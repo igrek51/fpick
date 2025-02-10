@@ -38,14 +38,17 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
         KeyCode::Enter if key_event.modifiers == KeyModifiers::ALT => app.open_action_dialog(),
         KeyCode::Enter => app.enter_selected_node(),
         KeyCode::Char('>') => app.pick_current_dir(), // Shift + .
+        KeyCode::F(2) => app.rename_selected_node(),
         KeyCode::F(5) => app.populate_current_child_nodes(),
         KeyCode::PageDown => app.move_cursor(20),
         KeyCode::PageUp => app.move_cursor(-20),
         KeyCode::Home => app.move_cursor(-(app.child_file_nodes.len() as i32)),
         KeyCode::End => app.move_cursor(app.child_file_nodes.len() as i32),
+        KeyCode::Char('r') if is_ctrl(key_event) => app.rename_selected_node(),
+        KeyCode::Char('d') if is_ctrl(key_event) => app.delete_selected_node_confirm(),
         KeyCode::Char('u') if is_ctrl(key_event) => app.clear_search_text(),
-        KeyCode::Backspace => app.backspace_search_text(),
         KeyCode::Char('w') if is_ctrl(key_event) => app.backspace_search_text(),
+        KeyCode::Backspace => app.backspace_search_text(),
         KeyCode::Char(c) => app.type_search_text(c),
         _ => log(format!("Unknown key event: {:?}", key_event).as_str()),
     };

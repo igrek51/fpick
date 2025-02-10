@@ -139,6 +139,10 @@ impl App {
             Some(abs_path) => abs_path,
             None => return,
         };
+        let tree_node: TreeNode = match self.get_selected_tree_node() {
+            Some(tree_node) => tree_node,
+            None => return,
+        };
         if self.action_menu_buffer.is_empty() {
             self.show_error("No value given".to_string());
             return;
@@ -148,6 +152,17 @@ impl App {
         match self.action_menu_operation {
             Some(Operation::Rename) => {
                 let result = rename_file(&abs_path, &self.action_menu_buffer);
+                match result {
+                    Err(err) => self.show_error(err.to_string()),
+                    _ => {}
+                }
+            }
+            Some(Operation::Delete) => {
+                if &self.action_menu_buffer != "yes" {
+                    self.show_error("Operation aborted".to_string());
+                    return;
+                }
+                let result = delete_tree_node(&tree_node, &abs_path);
                 match result {
                     Err(err) => self.show_error(err.to_string()),
                     _ => {}
@@ -194,6 +209,32 @@ impl App {
         }
         self.window_focus = WindowFocus::Tree;
         self.populate_current_child_nodes();
+    }
+
+    pub fn rename_selected_node(&mut self) {
+        let abs_path: String = match self.get_selected_abs_path() {
+            Some(abs_path) => abs_path,
+            None => return,
+        };
+        let filename = abs_path.split('/').last().unwrap().to_string();
+        self.action_menu_operation = Some(Operation::Rename);
+        self.open_action_menu_step2(format!("New name for {}", filename), filename);
+    }
+
+    pub fn delete_selected_node_confirm(&mut self) {
+        let abs_path: String = match self.get_selected_abs_path() {
+            Some(abs_path) => abs_path,
+            None => return,
+        };
+        let filename = abs_path.split('/').last().unwrap().to_string();
+        self.action_menu_operation = Some(Operation::Delete);
+        self.open_action_menu_step2(
+            format!(
+                "Are you sure you want to permanently delete \"{}\"?",
+                filename
+            ),
+            "yes".to_string(),
+        );
     }
 
     pub fn action_menu_input_append(&mut self, c: char) {

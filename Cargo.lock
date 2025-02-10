@@ -166,7 +166,7 @@ checksum = "f81ec6369c545a7d40e4589b5597581fa1c441fe1cce96dd1de43159910a36a2"
 
 [[package]]
 name = "fpick"
-version = "0.7.8"
+version = "0.7.9"
 dependencies = [
  "anyhow",
  "chrono",
