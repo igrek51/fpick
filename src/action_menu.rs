@@ -100,7 +100,7 @@ pub fn generate_known_actions() -> Vec<MenuAction> {
             },
         },
         MenuAction {
-            name: "Run interactive command",
+            name: "Run interactive, external command",
             operation: Operation::CustomInteractiveCommand,
         },
         MenuAction {

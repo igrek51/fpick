@@ -86,7 +86,7 @@ impl App {
             }
             Operation::CustomInteractiveCommand => {
                 self.open_action_menu_step2(
-                    format!("Run interactive command at {}", current_dir_path),
+                    format!("Run interactive, external command at {}", current_dir_path),
                     format!("\"{}\"", abs_path),
                 );
             }
