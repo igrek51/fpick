@@ -53,6 +53,7 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
         KeyCode::Char('d') if is_ctrl(key_event) => app.delete_selected_node_confirm(),
         KeyCode::Char('u') if is_ctrl(key_event) => app.clear_search_text(),
         KeyCode::Char('w') if is_ctrl(key_event) => app.backspace_search_text(),
+        KeyCode::Char('o') if is_ctrl(key_event) => app.open_action_dialog(),
         KeyCode::Backspace => app.backspace_search_text(),
         KeyCode::Char(c) => app.type_search_text(c),
         _ => log(format!("Unknown key event: {:?}", key_event).as_str()),
