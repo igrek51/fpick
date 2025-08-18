@@ -224,6 +224,22 @@ impl App {
         self.set_dir_cursor(0);
     }
 
+    pub fn go_to_home(&mut self) {
+        match std::env::var("HOME") {
+            Ok(home_path) => match get_path_file_nodes(&home_path) {
+                Ok(nodes) => {
+                    self.parent_file_nodes = nodes;
+                    self.filter_text.clear();
+                    self.populate_current_child_nodes();
+                    self.reset_cursor_offset();
+                    self.set_dir_cursor(0);
+                }
+                Err(e) => self.show_error(contextualized_error(&e)),
+            },
+            Err(_) => self.show_error("HOME environment variable not set".to_string()),
+        }
+    }
+
     pub fn enter_selected_node(&mut self) {
         let selected_node_o: Option<TreeNode> = self.get_selected_tree_node();
         if selected_node_o.is_none() {

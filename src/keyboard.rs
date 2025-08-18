@@ -34,6 +34,7 @@ pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
         KeyCode::Up => app.move_cursor(-1),
         KeyCode::Left => app.go_up(),
         KeyCode::Char('/') => app.go_to_root(),
+        KeyCode::Char('~') => app.go_to_home(),
         KeyCode::Right | KeyCode::Tab => app.go_into(),
         KeyCode::Enter if key_event.modifiers == KeyModifiers::ALT => app.open_action_dialog(),
         KeyCode::Enter if key_event.modifiers == KeyModifiers::SHIFT => app.open_action_dialog(),
