@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
-use std::fs::{self, symlink_metadata, ReadDir};
-use std::fs::{metadata, DirEntry};
+use std::fs::{self, DirEntry, Metadata, ReadDir};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -24,19 +23,28 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
         .with_context(|| format!("failed to read directory '{}'", dir_path.to_string_lossy()))?;
 
     let files: Vec<FileNode> = dir_entries
-        .filter_map(|entry| {
-            let entry: DirEntry = entry.context("failed to list a file").ok()?;
-            let md = metadata(entry.path())
-                .context("failed to read file metadata")
+        .filter_map(|entry_r: Result<DirEntry, std::io::Error>| {
+            let entry: DirEntry = entry_r.context("failed to list a file").ok()?;
+            let file_type = entry
+                .file_type()
+                .context("failed to check the file type")
                 .ok()?;
-            let symlink_md = symlink_metadata(entry.path())
-                .context("failed to read symlink metadata")
-                .ok()?;
-            let is_symlink = symlink_md.is_symlink();
-            let is_directory = md.is_dir();
+
+            let is_symlink = file_type.is_symlink();
+            let mut is_directory = file_type.is_dir();
+
+            let resolved_file_type = if is_symlink {
+                let symlink_md: Metadata = fs::metadata(entry.path())
+                    .context("failed to read symlink metadata")
+                    .ok()?;
+                is_directory = symlink_md.is_dir();
+                symlink_md.file_type()
+            } else {
+                file_type
+            };
             let file_type = if is_directory {
                 FileType::Directory
-            } else if md.is_file() {
+            } else if resolved_file_type.is_file() {
                 FileType::Regular
             } else {
                 FileType::Other
