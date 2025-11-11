@@ -10,7 +10,9 @@
     <a href="https://docs.rs/crate/fpick/">docs.rs</a>
 </div>
 
-![](./docs/img/screenshot1.png)
+<p align="center">
+  <img src="./docs/img/screenshot1.png">
+</p>
 
 **fpick** returns the selected path to standard output, so you combine it with other commands:
 ```sh
