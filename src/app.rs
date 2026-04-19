@@ -73,8 +73,8 @@ impl App {
         tui.enter()?;
 
         while !self.should_quit {
-            tui.draw(self)?;
-            tui.handle_events(self)?;
+            tui.draw(self)?;  // Draw current state first
+            tui.handle_events(self)?;  // Then process input
 
             signal_rx.try_recv().ok().map(|_| {
                 self.quit();

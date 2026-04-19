@@ -15,15 +15,29 @@ pub fn update_on_key(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
 
 pub fn handle_master_key(app: &mut App, key_event: KeyEvent) -> bool {
     match key_event.code {
-        KeyCode::Enter | KeyCode::Esc if app.has_error() => app.clear_error(),
-        KeyCode::Enter | KeyCode::Esc if app.has_info() => app.clear_info(),
-        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => app.quit(),
-        KeyCode::Down if app.has_info() => app.move_cursor(1),
-        KeyCode::Up if app.has_info() => app.move_cursor(-1),
-        KeyCode::Left | KeyCode::Right if app.has_info() => return true,
-        _ => return false,
-    };
-    true
+        KeyCode::Enter | KeyCode::Esc if app.has_error() => {
+            app.clear_error();
+            true
+        }
+        KeyCode::Enter | KeyCode::Esc if app.has_info() => {
+            app.clear_info();
+            true
+        }
+        KeyCode::Char('c') | KeyCode::Char('C') if is_ctrl(key_event) => {
+            app.quit();
+            true
+        }
+        KeyCode::Down if app.has_info() => {
+            app.move_cursor(1);
+            true
+        }
+        KeyCode::Up if app.has_info() => {
+            app.move_cursor(-1);
+            true
+        }
+        KeyCode::Left | KeyCode::Right if app.has_info() => true,
+        _ => false,
+    }
 }
 
 pub fn on_key_tree(app: &mut App, key_event: KeyEvent) {
