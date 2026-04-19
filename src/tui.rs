@@ -31,7 +31,7 @@ impl Tui {
 
     pub fn enter(&mut self) -> Result<()> {
         terminal::enable_raw_mode()?; // https://docs.rs/crossterm/latest/crossterm/terminal/index.html#raw-mode
-        crossterm::execute!(io::stderr(), EnterAlternateScreen,)?;
+        crossterm::execute!(io::stderr(), EnterAlternateScreen)?;
         self.event_handler.resume();
 
         let panic_hook = panic::take_hook();
@@ -62,14 +62,14 @@ impl Tui {
 
     fn fatal_exit() -> Result<()> {
         terminal::disable_raw_mode()?;
-        crossterm::execute!(io::stderr(), LeaveAlternateScreen,)?;
+        crossterm::execute!(io::stderr(), LeaveAlternateScreen)?;
         Ok(())
     }
 
     pub fn exit(&mut self) -> Result<()> {
         self.event_handler.suspend();
         terminal::disable_raw_mode()?;
-        crossterm::execute!(io::stderr(), LeaveAlternateScreen,)?;
+        crossterm::execute!(io::stderr(), LeaveAlternateScreen)?;
         Ok(())
     }
 }

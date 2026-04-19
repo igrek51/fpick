@@ -19,7 +19,7 @@ pub enum TreeNodeType {
 }
 
 impl TreeNode {
-    pub fn render_list_item(&self) -> ListItem {
+    pub fn render_list_item(&self) -> ListItem<'_> {
         match &self.kind {
             TreeNodeType::FileNode(file_node) => self.render_file_node(file_node),
             TreeNodeType::SelfReference => self.render_self_reference(),
@@ -47,7 +47,7 @@ impl TreeNode {
         }
     }
 
-    pub fn render_file_node(&self, file_node: &FileNode) -> ListItem {
+    pub fn render_file_node(&self, file_node: &FileNode) -> ListItem<'_> {
         let display: String = file_node.name.clone();
         let mut suffix = String::new();
         let mut style = Style::default();
@@ -62,7 +62,7 @@ impl TreeNode {
         Line::from(vec![Span::styled(display, style), Span::raw(suffix)]).into()
     }
 
-    pub fn render_self_reference(&self) -> ListItem {
+    pub fn render_self_reference(&self) -> ListItem<'_> {
         let style = Style::default()
             .fg(ratatui::style::Color::LightYellow)
             .bold();

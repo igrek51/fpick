@@ -15,7 +15,10 @@ use crate::tree::TreeNode;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     let area = frame.area();
-    let middle_h = area.height - 3;
+    let middle_h = area.height.saturating_sub(3);
+    if middle_h < 1 {
+        return;
+    }
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
@@ -246,7 +249,7 @@ fn centered_rect(w: u16, h: u16, r: Rect) -> Rect {
     }
 }
 
-fn render_action_popup_step2_line(app: &App) -> Line {
+fn render_action_popup_step2_line(app: &App) -> Line<'_> {
     let cx = app.action_menu_cursor_x;
     let chars: Chars<'_> = app.action_menu_buffer.chars();
     if cx >= chars.clone().count() {
