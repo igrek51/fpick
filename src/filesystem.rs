@@ -9,6 +9,7 @@ pub struct FileNode {
     pub lowercase_name: String,
     pub is_symlink: bool,
     pub is_directory: bool,
+    pub symlink_target: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -51,12 +52,20 @@ pub fn list_files(dir_path: &Path) -> Result<Vec<FileNode>> {
             };
             let name = entry.file_name().to_string_lossy().to_string();
             let lowercase_name = name.to_lowercase();
+            let symlink_target = if is_symlink {
+                std::fs::read_link(entry.path())
+                    .ok()
+                    .map(|p| p.to_string_lossy().to_string())
+            } else {
+                None
+            };
             Some(FileNode {
                 name,
                 file_type,
                 lowercase_name,
                 is_symlink,
                 is_directory,
+                symlink_target,
             })
         })
         .collect();
@@ -103,6 +112,7 @@ pub fn get_path_file_nodes(path: &String) -> Result<Vec<FileNode>> {
                     lowercase_name,
                     is_symlink: false,
                     is_directory: false,
+                    symlink_target: None,
                 })
             }
         })
