@@ -50,20 +50,20 @@ impl TreeNode {
     pub fn render_file_node(&self, file_node: &FileNode) -> ListItem<'_> {
         let display: String = file_node.name.clone();
         
-        // Determine icon based on file type
-        // For symlinks, show icon that reflects the target type
-        let icon = if file_node.is_symlink {
+        let icon = if file_node.is_broken {
+            "💔"
+        } else if file_node.is_symlink {
             if file_node.is_directory {
-                "📁"  // Points to a directory
+                "📁"
             } else {
-                "📄"  // Points to a file
+                "📄"
             }
         } else if file_node.is_directory {
-            "📁"  // Folder icon
+            "📁"
         } else {
-            "📄"  // File icon
+            "📄"
         };
-        
+
         let mut suffix = String::new();
         let mut style = Style::default();
         if file_node.is_symlink {
@@ -71,17 +71,26 @@ impl TreeNode {
             if let Some(target) = &file_node.symlink_target {
                 suffix = format!("{} ⇒ {}", suffix, target);
             }
-            style = Style::default().fg(ratatui::style::Color::LightCyan).bold();
+            if file_node.is_broken {
+                style = Style::default().fg(ratatui::style::Color::LightRed).bold();
+            } else {
+                style = Style::default().fg(ratatui::style::Color::LightCyan).bold();
+            }
         }
         if file_node.is_directory {
             suffix = format!("{suffix}/");
             style = Style::default().fg(ratatui::style::Color::LightBlue).bold();
         }
         
+        let suffix_span = if file_node.is_broken {
+            Span::styled(suffix, style)
+        } else {
+            Span::raw(suffix)
+        };
         Line::from(vec![
             Span::raw(format!("{} ", icon)),
             Span::styled(display, style),
-            Span::raw(suffix),
+            suffix_span,
         ]).into()
     }
 
