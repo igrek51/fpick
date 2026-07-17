@@ -41,7 +41,6 @@ mod tests {
         app.init().expect("init failed");
         
         // After init, we should have rendered tree nodes
-        let initial_tree_nodes_len = app.child_tree_nodes.len();
         
         // Call go_to_home - this should update both file nodes and tree nodes
         app.go_to_home();
