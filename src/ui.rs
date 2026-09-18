@@ -97,7 +97,23 @@ fn render_action_popup(app: &App, frame: &mut Frame) {
         .iter()
         .map(|it: &MenuAction| ListItem::new(it.name))
         .collect();
-    let mut list_state = ListState::default().with_selected(Some(app.action_menu_cursor_y));
+    let height = app.known_menu_actions.len() as u16 + 2;
+    let width: u16 = app
+        .known_menu_actions
+        .iter()
+        .map(|it: &MenuAction| it.name.len() as u16)
+        .max()
+        .unwrap_or(0)
+        + 8;
+    let area = centered_rect(width, height, frame.area());
+    // Keep the selected item visible when the popup is shorter than the menu
+    let visible_rows = area.height.saturating_sub(2) as usize;
+    let offset = app
+        .action_menu_cursor_y
+        .saturating_sub(visible_rows.saturating_sub(1));
+    let mut list_state = ListState::default()
+        .with_selected(Some(app.action_menu_cursor_y))
+        .with_offset(offset);
     let widget = List::new(list_items)
         .block(
             Block::default()
@@ -109,15 +125,6 @@ fn render_action_popup(app: &App, frame: &mut Frame) {
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
         .highlight_symbol(">> ");
 
-    let height = app.known_menu_actions.len() as u16 + 2;
-    let width: u16 = app
-        .known_menu_actions
-        .iter()
-        .map(|it: &MenuAction| it.name.len() as u16)
-        .max()
-        .unwrap_or(0)
-        + 8;
-    let area = centered_rect(width, height, frame.area());
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
     frame.render_stateful_widget(widget, area, &mut list_state);
@@ -239,6 +246,8 @@ fn render_info_popup(app: &App, frame: &mut Frame) {
 }
 
 fn centered_rect(w: u16, h: u16, r: Rect) -> Rect {
+    let w = w.min(r.width);
+    let h = h.min(r.height);
     let x_gap = (r.width as i32 - w as i32).clamp_min(0) / 2;
     let y_gap = (r.height as i32 - h as i32).clamp_min(0) / 2;
     Rect {
