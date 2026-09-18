@@ -9,8 +9,7 @@ use crate::app::App;
 use crate::appdata::WindowFocus;
 use crate::errors::contextualized_error;
 use crate::filesystem::{
-    get_path_file_nodes, get_string_abs_path, list_files, nodes_start_with, trim_end_slash,
-    FileNode, FileType,
+    get_path_file_nodes, get_string_abs_path, list_files, trim_end_slash, FileNode, FileType,
 };
 use crate::numbers::{ClampNumExt, MyIntExt};
 use crate::tree::{render_tree_nodes, TreeNode, TreeNodeType};
@@ -336,14 +335,14 @@ impl App {
         self.build_tree_node_path(&current_dir_node)
     }
 
-    pub fn determine_relative_mode(&self, chosen_nodes: &Vec<FileNode>) -> bool {
+    pub fn determine_relative_mode(&self, _chosen_nodes: &Vec<FileNode>) -> bool {
         if self.absolute_path {
             return false;
         }
         if self.relative_path {
             return true;
         }
-        nodes_start_with(chosen_nodes, &self.starting_dir_nodes)
+        false
     }
 
     pub fn make_relative_path(&mut self, chosen_path: &String) -> Option<String> {

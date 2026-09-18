@@ -142,18 +142,6 @@ pub fn get_string_abs_path(nodes: &Vec<FileNode>) -> String {
     normalize_path(path)
 }
 
-pub fn nodes_start_with(nodes: &Vec<FileNode>, start: &Vec<FileNode>) -> bool {
-    if nodes.len() < start.len() {
-        return false;
-    }
-    for (i, node) in start.iter().enumerate() {
-        if nodes[i].name != node.name {
-            return false;
-        }
-    }
-    true
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
