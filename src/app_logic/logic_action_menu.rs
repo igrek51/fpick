@@ -18,7 +18,9 @@ impl App {
             return;
         }
         self.window_focus = WindowFocus::ActionMenu;
-        self.action_menu_cursor_y = 0;
+        if self.action_menu_cursor_y >= self.known_menu_actions.len() {
+            self.action_menu_cursor_y = 0;
+        }
     }
 
     pub fn close_action_dialog(&mut self) {
