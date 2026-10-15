@@ -69,7 +69,7 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
         .block(title_block)
         .style(Style::default().fg(Color::White))
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
-        .highlight_symbol(">> ");
+        .highlight_symbol("> ");
 
     frame.render_stateful_widget(widget, area, &mut app.file_tree_state);
 }
@@ -123,7 +123,7 @@ fn render_action_popup(app: &App, frame: &mut Frame) {
         )
         .style(Style::default().fg(Color::White).bg(Color::DarkGray))
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
-        .highlight_symbol(">> ");
+        .highlight_symbol("> ");
 
     let buffer = frame.buffer_mut();
     Clear.render(area, buffer);
