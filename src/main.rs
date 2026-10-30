@@ -14,6 +14,7 @@ mod navigation_test;
 mod numbers;
 mod numbers_test;
 mod render_bug_test;
+mod render_window_test;
 mod simulation_test;
 mod start_path_test;
 mod tree;

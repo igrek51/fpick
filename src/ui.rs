@@ -41,8 +41,28 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 }
 
 fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
-    let list_items: Vec<ListItem> = app
-        .child_tree_nodes
+    let total = app.child_tree_nodes.len();
+    let view_height = (area.height.saturating_sub(2) as usize).max(1);
+    let offset = visible_offset(
+        app.dir_cursor,
+        app.file_tree_state.offset(),
+        view_height,
+        total,
+    );
+    let selected = if total == 0 {
+        None
+    } else {
+        Some(app.dir_cursor.min(total - 1))
+    };
+    app.file_tree_state = app
+        .file_tree_state
+        .clone()
+        .with_offset(offset)
+        .with_selected(selected);
+
+    // Build only the visible slice: per-frame work must be O(visible), not O(entries).
+    let window_end = (offset + view_height).min(total);
+    let list_items: Vec<ListItem> = app.child_tree_nodes[offset..window_end]
         .iter()
         .map(|it: &TreeNode| it.render_list_item())
         .collect();
@@ -65,13 +85,38 @@ fn render_dir_tree(app: &mut App, frame: &mut Frame, area: Rect) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
 
+    let mut list_state = ListState::default()
+        .with_offset(0)
+        .with_selected(selected.map(|index| index - offset));
+
     let widget = List::new(list_items)
         .block(title_block)
         .style(Style::default().fg(Color::White))
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
         .highlight_symbol("> ");
 
-    frame.render_stateful_widget(widget, area, &mut app.file_tree_state);
+    frame.render_stateful_widget(widget, area, &mut list_state);
+}
+
+/// Scroll offset that keeps `selected` visible in a window of `view_height`
+/// items out of `total`, starting from the current offset.
+pub fn visible_offset(
+    selected: usize,
+    current_offset: usize,
+    view_height: usize,
+    total: usize,
+) -> usize {
+    if view_height == 0 || total == 0 {
+        return 0;
+    }
+    let max_offset = total.saturating_sub(view_height);
+    let mut offset = current_offset.min(max_offset);
+    if selected < offset {
+        offset = selected;
+    } else if selected >= offset + view_height {
+        offset = selected + 1 - view_height;
+    }
+    offset.min(max_offset)
 }
 
 fn render_filter_panel(app: &App, frame: &mut Frame, area: Rect) {

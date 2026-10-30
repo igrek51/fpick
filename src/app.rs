@@ -73,6 +73,7 @@ impl App {
         tui.enter()?;
 
         while !self.should_quit {
+            self.tick();
             tui.draw(self)?;
             tui.handle_events(self)?;
 
