@@ -78,6 +78,7 @@ See `fpick --help` for options.
 Usage:
 - `fpick [OPTIONS]` to select a file in a current directory and return its path
 - `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
+- `fpick [OPTIONS] <FILE>` to start in the file's directory with that file focused
 
 Options:
 - `--relative`, `--rel`, `-r` - Print selected path as relative to the starting directory

@@ -20,6 +20,7 @@ Navigate with arrow keys and enter. It returns the selected path to standard out
 Usage:
   `fpick [OPTIONS]` to select a file in a current directory and return its path
   `fpick [OPTIONS] <PATH>` to select a file starting from a specified directory
+  `fpick [OPTIONS] <FILE>` to start in the file's directory with that file focused
 
 Options:
     --relative, --rel, -r  Always print chosen path as relative to the starting directory
@@ -72,12 +73,55 @@ impl App {
     }
 
     pub fn init(&mut self) -> Result<()> {
+        let start_path: PathBuf = match self.starting_dir.is_empty() {
+            true => PathBuf::from("."),
+            false => PathBuf::from(&self.starting_dir),
+        };
+        let start_metadata = fs::metadata(&start_path)
+            .with_context(|| format!("reading path '{}'", start_path.to_string_lossy()))?;
+
+        // When pointed at a file, start in its parent directory and focus on that file
+        let (dir_path, focus_name): (PathBuf, Option<String>) = if start_metadata.is_file() {
+            let parent_path: PathBuf = match start_path.parent() {
+                Some(parent) => parent.to_path_buf(),
+                None => PathBuf::from("/"),
+            };
+            let file_name: Option<String> = start_path
+                .file_name()
+                .map(|name| name.to_string_lossy().to_string());
+            (parent_path, file_name)
+        } else {
+            (start_path, None)
+        };
+
+        let dir_path_str: String = dir_path.to_string_lossy().to_string();
         self.parent_file_nodes =
-            get_path_file_nodes(&self.starting_dir).context("reading path nodes")?;
+            get_path_file_nodes(&dir_path_str).context("reading path nodes")?;
         self.starting_dir_nodes = self.parent_file_nodes.clone();
+        if focus_name.is_some() {
+            // Paths printed in relative mode are relative to the directory fpick started in
+            self.starting_dir = dir_path_str;
+        }
         self.populate_current_child_nodes();
-        self.set_dir_cursor(0);
+        match focus_name {
+            Some(name) => self.focus_node_by_name(&name),
+            None => self.set_dir_cursor(0),
+        }
         Ok(())
+    }
+
+    pub fn focus_node_by_name(&mut self, name: &str) {
+        match self
+            .child_tree_nodes
+            .iter()
+            .position(|node| node.name() == name)
+        {
+            Some(index) => {
+                self.reset_cursor_offset();
+                self.set_dir_cursor(index);
+            }
+            None => self.set_dir_cursor(0),
+        }
     }
 
     pub fn render_tree_nodes(&mut self) {
