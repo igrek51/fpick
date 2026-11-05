@@ -18,6 +18,8 @@ mod render_window_test;
 mod simulation_test;
 mod start_path_test;
 mod tree;
+#[cfg(unix)]
+mod tty_input;
 mod tui;
 mod ui;
 

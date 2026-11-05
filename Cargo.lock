@@ -207,6 +207,7 @@ dependencies = [
  "crossterm",
  "itertools",
  "lazy_static",
+ "libc",
  "ratatui",
  "relative-path",
  "signal-hook",

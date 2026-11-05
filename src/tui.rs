@@ -19,14 +19,14 @@ pub struct Tui {
 }
 
 impl Tui {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self> {
         let backend = CrosstermBackend::new(std::io::stderr());
         let terminal: CrosstermTerminal = Terminal::new(backend).unwrap();
-        let event_handler: EventHandler = EventHandler::new(500);
-        Self {
+        let event_handler: EventHandler = EventHandler::new(500)?;
+        Ok(Self {
             terminal,
             event_handler,
-        }
+        })
     }
 
     pub fn enter(&mut self) -> Result<()> {
